@@ -1,0 +1,96 @@
+# Monotonic — exercise plans.
+# Each [[plan]] is a session: a name, the day(s) it applies to, and an ordered
+# list of exercises. `weight` is optional (omit for bodyweight). `weight_step`
+# is optional and sets the +/- increment (defaults to 2.5).
+
+[[plan]]
+name = "Push"
+days = ["mon", "thu"]
+
+  [[plan.exercise]]
+  name = "Bench Press"
+  sets = 3
+  reps = 8
+  weight = 60
+  weight_step = 2.5
+
+  [[plan.exercise]]
+  name = "Overhead Press"
+  sets = 3
+  reps = 8
+  weight = 35
+  weight_step = 2.5
+
+  [[plan.exercise]]
+  name = "Tricep Pushdown"
+  sets = 3
+  reps = 12
+  weight = 25
+  weight_step = 5
+
+  [[plan.exercise]]
+  name = "Press-ups"
+  sets = 3
+  reps = 15
+
+[[plan]]
+name = "Pull"
+days = ["tue", "fri"]
+
+  [[plan.exercise]]
+  name = "Lat Pulldown"
+  sets = 4
+  reps = 10
+  weight = 45
+  weight_step = 5
+
+  [[plan.exercise]]
+  name = "Seated Row"
+  sets = 3
+  reps = 10
+  weight = 50
+  weight_step = 5
+
+  [[plan.exercise]]
+  name = "Bicep Curl"
+  sets = 3
+  reps = 12
+  weight = 12
+  weight_step = 2
+
+  [[plan.exercise]]
+  name = "Pull-ups"
+  sets = 3
+  reps = 6
+
+[[plan]]
+name = "Legs"
+days = ["wed", "sat"]
+
+  [[plan.exercise]]
+  name = "Squat"
+  sets = 5
+  reps = 5
+  weight = 80
+  weight_step = 5
+
+  [[plan.exercise]]
+  name = "Romanian Deadlift"
+  sets = 3
+  reps = 8
+  weight = 70
+  weight_step = 5
+
+  [[plan.exercise]]
+  name = "Leg Press"
+  sets = 3
+  reps = 12
+  weight = 120
+  weight_step = 10
+
+  [[plan.exercise]]
+  name = "Calf Raise"
+  sets = 4
+  reps = 15
+  weight = 40
+  weight_step = 5
