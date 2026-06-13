@@ -272,42 +272,33 @@ function markSkip(i) {
 }
 
 // --- input wiring ----------------------------------------------------------
-// Steppers use a tap/hold model that ignores scroll gestures. Nothing fires on
-// pointerdown, so a swipe that happens to start on a +/- button scrolls the page
-// (or triggers the iOS home gesture) instead of changing a value. A quick tap
-// steps once; pressing and holding repeats; any meaningful drag cancels.
-const MOVE_TOL = 8; // px of travel that reclassifies a press as a scroll
-let hold = { btn: null, x: 0, y: 0, moved: false, held: false, t: null, iv: null };
-const endHold = () => { clearTimeout(hold.t); clearInterval(hold.iv); hold.t = hold.iv = null; };
-const stepFromBtn = (b) => stepField(+b.dataset.i, b.dataset.field, +b.dataset.delta);
+// Steppers fire only on a clean tap: nothing happens on pointerdown, and a press
+// that travels past a small threshold (a scroll, or the iOS home swipe) fires
+// nothing at all. So a swipe that starts on a +/- button scrolls the page instead
+// of changing a value. One tap = one step; tap again to keep going.
+const MOVE_TOL = 10; // px of travel that reclassifies a press as a scroll
+let press = { btn: null, x: 0, y: 0, moved: false };
+const clearPress = () => { press = { btn: null, x: 0, y: 0, moved: false }; };
 
 sessionEl.addEventListener('pointerdown', (e) => {
   const btn = e.target.closest('[data-act="step"]');
   if (!btn) return;
-  hold.btn = btn; hold.x = e.clientX; hold.y = e.clientY;
-  hold.moved = false; hold.held = false;
-  hold.t = setTimeout(() => {              // press-and-hold → repeat
-    if (!hold.btn || hold.moved) return;
-    hold.held = true;
-    stepFromBtn(btn);
-    hold.iv = setInterval(() => stepFromBtn(btn), 110);
-  }, 380);
+  press = { btn, x: e.clientX, y: e.clientY, moved: false };
 });
 
 sessionEl.addEventListener('pointermove', (e) => {
-  if (!hold.btn || hold.moved) return;
-  if (Math.abs(e.clientX - hold.x) > MOVE_TOL || Math.abs(e.clientY - hold.y) > MOVE_TOL) {
-    hold.moved = true; // it's a scroll, not a tap — let the page move, fire nothing
-    endHold();
+  if (!press.btn || press.moved) return;
+  if (Math.abs(e.clientX - press.x) > MOVE_TOL || Math.abs(e.clientY - press.y) > MOVE_TOL) {
+    press.moved = true; // a scroll, not a tap — let the page move, fire nothing
   }
 });
 
 window.addEventListener('pointerup', () => {
-  const { btn, moved, held } = hold;
-  endHold(); hold.btn = null;
-  if (btn && !moved && !held) stepFromBtn(btn); // genuine tap → exactly one step
+  const { btn, moved } = press;
+  clearPress();
+  if (btn && !moved) stepField(+btn.dataset.i, btn.dataset.field, +btn.dataset.delta);
 });
-window.addEventListener('pointercancel', () => { endHold(); hold.btn = null; });
+window.addEventListener('pointercancel', clearPress);
 
 sessionEl.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-act]');

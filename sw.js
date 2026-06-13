@@ -1,4 +1,4 @@
-const CACHE = 'monotonic-v6';
+const CACHE = 'monotonic-v7';
 const FONT_CACHE = 'monotonic-fonts-v1';
 const NET_TIMEOUT = 2500; // ms before falling back to cache on slow/flaky networks
 const SHELL = [
