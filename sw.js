@@ -1,4 +1,5 @@
-const CACHE = 'monotonic-v3';
+const CACHE = 'monotonic-v4';
+const FONT_CACHE = 'monotonic-fonts-v1';
 const NET_TIMEOUT = 2500; // ms before falling back to cache on slow/flaky networks
 const SHELL = [
   './',
@@ -17,9 +18,10 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
+  const keep = [CACHE, FONT_CACHE];
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => !keep.includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -46,13 +48,28 @@ async function networkFirst(req) {
   }
 }
 
+// Cache-first: for immutable third-party assets (web fonts). Cached on first
+// online load so the custom type survives offline.
+async function cacheFirst(req, cacheName) {
+  const cached = await caches.match(req);
+  if (cached) return cached;
+  const fresh = await fetch(req);
+  if (fresh && (fresh.ok || fresh.type === 'opaque')) (await caches.open(cacheName)).put(req, fresh.clone());
+  return fresh;
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // App shell (navigations + same-origin assets) is network-first. Cross-origin
-  // requests (e.g. a remote plans TOML) are left to the page, which keeps its
-  // own copy in localStorage.
+
+  if (url.host === 'fonts.googleapis.com' || url.host === 'fonts.gstatic.com') {
+    e.respondWith(cacheFirst(req, FONT_CACHE));
+    return;
+  }
+  // App shell (navigations + same-origin assets) is network-first. Other
+  // cross-origin requests (e.g. a remote plans TOML) are left to the page,
+  // which keeps its own copy in localStorage.
   if (req.mode === 'navigate' || url.origin === self.location.origin) {
     e.respondWith(networkFirst(req));
   }

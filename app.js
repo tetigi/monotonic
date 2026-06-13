@@ -7,6 +7,7 @@ const K = {
   cache: 'monotonic.plansCache',
   progress: 'monotonic.progress',
   active: 'monotonic.active',
+  theme: 'monotonic.theme',
 };
 
 // --- storage helpers -------------------------------------------------------
@@ -28,12 +29,12 @@ const selectEl = $('planSelect');
 const fmt = (n) => {
   if (n == null) return '';
   const r = Math.round(n * 1000) / 1000;
-  return Number.isInteger(r) ? String(r) : String(r);
+  return String(r);
 };
 const todayDate = () => new Date().toISOString().slice(0, 10);
 const todayDow = () => WEEKDAYS[new Date().getDay()];
 
-// Middle-field ("reps") display by unit: counts as-is, minutes as-is, time as m:ss.
+// Middle-field ("reps") display by unit: counts/minutes as-is, time as m:ss.
 const fmtCount = (v, unit) => {
   if (v == null) return '';
   if (unit === 'time') {
@@ -43,6 +44,10 @@ const fmtCount = (v, unit) => {
   return fmt(v);
 };
 const repLabel = (unit) => (unit === 'time' ? 'Time' : unit === 'min' ? 'Min' : 'Reps');
+// Short mono label for the middle field's stepper group.
+const groupKey = (unit) => (unit === 'time' ? 'time' : unit === 'min' ? 'min' : 'reps');
+// Show a sets stepper only when meaningful (rep work, or more than one set).
+const showSets = (item) => item.unit === 'reps' || item.cur.sets > 1;
 // Parse "m:ss" or a plain number (seconds) back to seconds.
 const parseTime = (s) => {
   s = String(s).trim();
@@ -52,6 +57,25 @@ const parseTime = (s) => {
   }
   return parseFloat(s);
 };
+const escapeHtml = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// --- theme -----------------------------------------------------------------
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem(K.theme, t); } catch {}
+  const b = $('themeToggle');
+  if (b) {
+    b.innerHTML = t === 'dark' ? '☀' : '☾'; // sun / moon
+    b.setAttribute('aria-label', t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+}
+function initTheme() {
+  let t;
+  try { t = localStorage.getItem(K.theme); } catch {}
+  if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(t);
+}
 
 // --- plans loading ---------------------------------------------------------
 function getUrl() {
@@ -90,68 +114,89 @@ function ensureSession() {
   if (plan) buildSession(plan);
 }
 
-const cueGlyph = { up: '\u25B2', same: '\u003D', down: '\u25BC' };
-
 // --- rendering -------------------------------------------------------------
+const DOW_UP = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+function updateMeta() {
+  const m = $('sessionMeta');
+  if (!m) return;
+  const items = active?.items || [];
+  const done = items.filter((x) => x.done).length;
+  const wd = DOW_UP[new Date().getDay()];
+  const dd = todayDate().slice(5).replace('-', '.');
+  m.innerHTML = items.length ? `${wd} ${dd}<br><b>${done}</b>/${items.length} done` : `${wd} ${dd}`;
+}
+
 function renderSelect() {
   const dow = todayDow();
   selectEl.innerHTML = '';
   for (const p of plans) {
     const o = document.createElement('option');
     o.value = p.name;
-    o.textContent = p.days.includes(dow) ? `${p.name} \u00B7 today` : p.name;
+    o.textContent = p.days.includes(dow) ? `${p.name} · today` : p.name;
     if (active && p.name === active.planName) o.selected = true;
     selectEl.appendChild(o);
   }
+  const name = active?.planName || plans[0]?.name || 'Monotonic';
+  $('planName').textContent = name;
+  $('titlewrap').classList.toggle('switchable', plans.length > 1);
+  updateMeta();
 }
 
 function lastLabel(item) {
   const { ref, hasWeight, unit } = item;
-  const base = `last ${fmt(ref.sets)}\u00D7${fmtCount(ref.reps, unit)}`;
-  return hasWeight ? `${base} \u00B7 ${fmt(ref.weight)}` : base;
+  let s = (unit !== 'reps' && ref.sets === 1)
+    ? fmtCount(ref.reps, unit)
+    : `${fmt(ref.sets)}×${fmtCount(ref.reps, unit)}`;
+  if (hasWeight) s += ` · ${fmt(ref.weight)}`;
+  return `last <b>${s}</b>`;
 }
 
-function stepperRow(i, field, label, value) {
-  return `
-    <div class="stepper">
-      <span class="lbl">${label}</span>
-      <button class="step" data-act="step" data-i="${i}" data-field="${field}" data-delta="-1">\u2212</button>
-      <span class="val" data-act="edit" data-i="${i}" data-field="${field}" id="v-${i}-${field}">${value}</span>
-      <button class="step" data-act="step" data-i="${i}" data-field="${field}" data-delta="1">+</button>
-    </div>`;
+function stepperGroup(i, field, key, value) {
+  return `<div class="grp"><span class="k">${key}</span>`
+    + `<button data-act="step" data-i="${i}" data-field="${field}" data-delta="-1">−</button>`
+    + `<span class="v" data-act="edit" data-i="${i}" data-field="${field}" id="v-${i}-${field}">${value}</span>`
+    + `<button data-act="step" data-i="${i}" data-field="${field}" data-delta="1">+</button></div>`;
+}
+
+function cellClass(item) {
+  if (item.done || item.skipped) return 'resolved';
+  const cue = cueFor(item);
+  return cue === 'up' ? 'ahead' : cue === 'down' ? 'behind' : '';
 }
 
 function renderSession() {
   if (!plans.length) {
-    sessionEl.innerHTML = `<div class="msg">No plans loaded.<br>Open settings (\u2699) to set your Plans URL.</div>`;
+    sessionEl.innerHTML = `<div class="msg">No plans loaded.<br>Open settings (⚙) to set your Plans URL.</div>`;
+    updateMeta();
     return;
   }
   if (!active || !active.items?.length) {
     sessionEl.innerHTML = `<div class="msg">No session.</div>`;
+    updateMeta();
     return;
   }
-  const html = active.items.map((item, i) => {
-    const cue = cueFor(item);
-    const resolved = item.done || item.skipped ? ' resolved' : '';
-    const rows = [
-      stepperRow(i, 'sets', 'Sets', fmt(item.cur.sets)),
-      stepperRow(i, 'reps', repLabel(item.unit), fmtCount(item.cur.reps, item.unit)),
-      item.hasWeight ? stepperRow(i, 'weight', 'Weight', fmt(item.cur.weight)) : '',
-    ].join('');
+  sessionEl.innerHTML = active.items.map((item, i) => {
+    const groups = [];
+    if (showSets(item)) groups.push(stepperGroup(i, 'sets', 'set', fmt(item.cur.sets)));
+    groups.push(stepperGroup(i, 'reps', groupKey(item.unit), fmtCount(item.cur.reps, item.unit)));
+    if (item.hasWeight) groups.push(stepperGroup(i, 'weight', 'kg', fmt(item.cur.weight)));
+    const idx = String(i + 1).padStart(2, '0');
+    const tag = `<span class="i">${idx}</span> · ${groupKey(item.unit)}${item.hasWeight ? ' · kg' : ''}`;
     return `
-      <section class="card cue-${cue}${resolved}" id="card-${i}">
-        <div class="card-top">
-          <span class="ex-name">${escapeHtml(item.name)}</span>
-          <span class="ex-last">${lastLabel(item)}<span class="glyph">${cueGlyph[cue]}</span></span>
-        </div>
-        ${rows}
-        <div class="actions">
-          <button class="btn done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">Done</button>
-          <button class="btn skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">Skip</button>
+      <section class="cell ${cellClass(item)}" id="card-${i}">
+        <span class="cx tl"></span><span class="cx tr"></span><span class="cx bl"></span><span class="cx br"></span>
+        <div class="tag">${tag}</div>
+        <div class="row2"><span class="nm">${escapeHtml(item.name)}</span><span class="last">${lastLabel(item)}</span></div>
+        <div class="ctl">
+          ${groups.join('')}
+          <span class="sp"></span>
+          <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
+          <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
         </div>
       </section>`;
   }).join('');
-  sessionEl.innerHTML = html;
+  updateMeta();
 }
 
 function updateCard(i) {
@@ -162,16 +207,11 @@ function updateCard(i) {
     const el = $(`v-${i}-${field}`);
     if (el) el.textContent = field === 'reps' ? fmtCount(item.cur.reps, item.unit) : fmt(item.cur[field]);
   }
-  const cue = cueFor(item);
-  card.className = `card cue-${cue}${item.done || item.skipped ? ' resolved' : ''}`;
-  const glyph = card.querySelector('.glyph');
-  if (glyph) glyph.textContent = cueGlyph[cue];
-  card.querySelector('.btn.done')?.classList.toggle('on', item.done);
-  card.querySelector('.btn.skip')?.classList.toggle('on', item.skipped);
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  card.className = `cell ${cellClass(item)}`;
+  const d = card.querySelector('.act.done');
+  if (d) { d.classList.toggle('on', item.done); d.textContent = item.done ? '✓ done' : 'done'; }
+  card.querySelector('.act.skip')?.classList.toggle('on', item.skipped);
+  updateMeta();
 }
 
 // --- mutations -------------------------------------------------------------
@@ -193,7 +233,7 @@ function editField(i, field) {
   const isTime = field === 'reps' && item.unit === 'time';
   const shown = field === 'reps' ? fmtCount(item.cur.reps, item.unit) : fmt(item.cur[field]);
   const fieldLabel = field === 'reps' ? repLabel(item.unit).toLowerCase() : field;
-  const raw = prompt(`${item.name} \u2014 ${fieldLabel}`, shown);
+  const raw = prompt(`${item.name} — ${fieldLabel}`, shown);
   if (raw == null) return;
   const n = isTime ? parseTime(raw) : parseFloat(raw);
   if (!Number.isFinite(n) || n < 0) return;
@@ -204,7 +244,7 @@ function editField(i, field) {
 
 function markDone(i) {
   const item = active.items[i];
-  if (item.done) { // toggle off → undo the progress write
+  if (item.done) { // toggle off -> undo the progress write
     if (item.prevProgress === null) delete progress[item.name];
     else if (item.prevProgress !== undefined) progress[item.name] = item.prevProgress;
     item.prevProgress = undefined;
@@ -258,15 +298,18 @@ sessionEl.addEventListener('click', (e) => {
 
 selectEl.addEventListener('change', () => {
   const p = planByName(selectEl.value);
-  if (p) { buildSession(p); renderSession(); }
+  if (p) { buildSession(p); renderSelect(); renderSession(); }
 });
+
+$('themeToggle').addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
 // --- settings dialog -------------------------------------------------------
 const dlg = $('settings');
 $('openSettings').addEventListener('click', () => {
   $('urlInput').value = lsGet(K.url, '');
   const c = lsGet(K.cache, null);
-  $('fetchInfo').textContent = c ? `Last fetched: ${new Date(c.fetchedAt).toLocaleString()}` : 'No plans cached yet.';
+  $('fetchInfo').textContent = c ? `Last fetched ${new Date(c.fetchedAt).toLocaleString()}` : 'No plans cached yet.';
   $('settingsErr').textContent = '';
   dlg.showModal();
 });
@@ -279,7 +322,7 @@ async function doRefresh() {
     plans = loadCachedPlans() || [];
     rebuildAfterPlansChange();
     const c = lsGet(K.cache, null);
-    $('fetchInfo').textContent = `Last fetched: ${new Date(c.fetchedAt).toLocaleString()}`;
+    $('fetchInfo').textContent = `Last fetched ${new Date(c.fetchedAt).toLocaleString()}`;
   } catch (err) {
     $('settingsErr').textContent = `Refresh failed: ${err.message}`;
   }
@@ -324,9 +367,8 @@ $('importFile').addEventListener('change', async (e) => {
 });
 
 function rebuildAfterPlansChange() {
-  renderSelect();
   if (active && planByName(active.planName) && active.date === todayDate()) {
-    renderSession(); // keep current session
+    renderSelect(); renderSession(); // keep current session
   } else {
     ensureSession();
     renderSelect();
@@ -336,6 +378,7 @@ function rebuildAfterPlansChange() {
 
 // --- boot ------------------------------------------------------------------
 async function boot() {
+  initTheme();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
@@ -358,7 +401,7 @@ async function boot() {
       renderSelect();
       renderSession();
     } catch (err) {
-      sessionEl.innerHTML = `<div class="msg">Couldn't load plans.<br>${escapeHtml(err.message)}<br><br>Open settings (\u2699) to set your Plans URL.</div>`;
+      sessionEl.innerHTML = `<div class="msg">Couldn't load plans.<br><span class="err">${escapeHtml(err.message)}</span><br><br>Open settings (⚙) to set your Plans URL.</div>`;
     }
   }
 }

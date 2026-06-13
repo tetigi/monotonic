@@ -1,155 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#0b0b0c">
+  <meta name="theme-color" content="#f1efe9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15131c" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Monotonic">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <title>Monotonic</title>
+  <script>
+    // Apply saved theme before paint to avoid a flash.
+    try {
+      var t = localStorage.getItem('monotonic.theme')
+        || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #0b0b0c;
-      --card: #1c1c1e;
-      --card2: #2c2c2e;
-      --text: #f2f2f7;
-      --muted: #8e8e93;
-      --green: #34c759;
-      --amber: #ff9f0a;
-      --accent: #0a84ff;
-      --line: #3a3a3c;
+    :root, [data-theme="light"]{
+      --bg:#f1efe9; --ink:#1a1814; --body:#5a564d; --muted:#a09a8d; --line:#cfc9bc;
+      --card:#f7f5f0; --inset:#eceae3; --coral:#fb503b; --warn:#c0801c;
+      --grid:rgba(26,24,20,.05);
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body {
-      margin: 0; padding: 0;
-      background: var(--bg); color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      touch-action: manipulation;
-      overscroll-behavior: none;
-      user-select: none; -webkit-user-select: none;
+    [data-theme="dark"]{
+      --bg:#15131c; --ink:#f0ece5; --body:#a39d94; --muted:#6c6760; --line:#2c2933;
+      --card:#1a1822; --inset:#13111a; --coral:#fb5d45; --warn:#e0a33c;
+      --grid:rgba(255,255,255,.04);
     }
-    body {
+    *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+    html,body{
+      --sq:"Chivo",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace; --serif:"Fraunces",Georgia,serif;
+      background:var(--bg);color:var(--ink);font-family:var(--sq);-webkit-font-smoothing:antialiased;
+      touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;
+    }
+    body{
+      background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+      background-size:26px 26px;background-position:-1px -1px;background-attachment:fixed;
+      max-width:480px;margin:0 auto;min-height:100dvh;
       padding:
-        max(env(safe-area-inset-top), 8px)
-        max(env(safe-area-inset-right), 12px)
-        max(env(safe-area-inset-bottom), 12px)
-        max(env(safe-area-inset-left), 12px);
-      max-width: 640px; margin: 0 auto;
+        max(env(safe-area-inset-top),18px)
+        max(env(safe-area-inset-right),16px)
+        max(env(safe-area-inset-bottom),28px)
+        max(env(safe-area-inset-left),16px);
     }
-    header {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 12px;
-    }
-    #planSelect {
-      flex: 1; min-width: 0;
-      background: var(--card); color: var(--text);
-      border: 1px solid var(--line); border-radius: 12px;
-      padding: 12px 14px; font-size: 18px; font-weight: 600;
-      -webkit-appearance: none; appearance: none;
-    }
-    .iconbtn {
-      flex: 0 0 auto;
-      width: 48px; height: 48px;
-      background: var(--card); color: var(--text);
-      border: 1px solid var(--line); border-radius: 12px;
-      font-size: 20px; line-height: 1;
-      display: grid; place-items: center;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-left: 4px solid var(--line);
-      border-radius: 14px;
-      padding: 12px 12px 14px;
-      margin-bottom: 12px;
-      transition: opacity .15s ease;
-    }
-    .card.cue-up, .card.cue-same { border-left-color: var(--green); }
-    .card.cue-down { border-left-color: var(--amber); }
-    .card.resolved { opacity: .45; }
-    .card-top {
-      display: flex; align-items: baseline; justify-content: space-between;
-      gap: 8px; margin-bottom: 10px;
-    }
-    .ex-name { font-size: 19px; font-weight: 700; }
-    .ex-last { font-size: 13px; color: var(--muted); white-space: nowrap; }
-    .ex-last .glyph { font-weight: 700; margin-left: 4px; }
-    .cue-up .glyph { color: var(--green); }
-    .cue-same .glyph { color: var(--green); }
-    .cue-down .glyph { color: var(--amber); }
-    .stepper {
-      display: grid;
-      grid-template-columns: 64px 1fr auto 1fr;
-      align-items: center;
-      gap: 8px;
-      margin: 8px 0;
-    }
-    .stepper .lbl { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-    .stepper .val { text-align: center; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 6px 0; }
-    .step {
-      height: 56px; width: 100%;
-      background: var(--card2); color: var(--text);
-      border: none; border-radius: 12px;
-      font-size: 30px; font-weight: 600; line-height: 1;
-    }
-    .step:active { background: #3a3a3c; }
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-    .btn {
-      height: 54px; border: 1px solid var(--line); border-radius: 12px;
-      background: var(--card2); color: var(--text);
-      font-size: 17px; font-weight: 700;
-    }
-    .btn.done.on { background: var(--green); border-color: var(--green); color: #042; }
-    .btn.skip.on { background: var(--amber); border-color: var(--amber); color: #321; }
-    .msg { color: var(--muted); text-align: center; padding: 40px 16px; line-height: 1.5; }
-    dialog {
-      background: var(--card); color: var(--text);
-      border: 1px solid var(--line); border-radius: 16px;
-      width: min(92vw, 480px); padding: 18px;
-    }
-    dialog::backdrop { background: rgba(0,0,0,.6); }
-    dialog h2 { margin: 0 0 12px; font-size: 18px; }
-    dialog label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
-    dialog input[type=text] {
-      width: 100%; background: var(--bg); color: var(--text);
-      border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 16px;
-    }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-    .row .btn { height: 46px; flex: 1 1 auto; font-size: 15px; }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
-    .err { color: var(--amber); white-space: pre-wrap; font-size: 13px; margin-top: 8px; }
+
+    /* ---- header ---- */
+    .util{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .wordmark{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .wordmark b{color:var(--coral);font-weight:700}
+    .ur{display:flex;gap:8px}
+    .ico{width:38px;height:38px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+      font-size:16px;line-height:1;display:grid;place-items:center;border-radius:0}
+    .ico:active{background:var(--inset)}
+
+    .kick{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--coral);line-height:1}
+    .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:3px}
+    .titlewrap{position:relative;min-width:0}
+    h1{font-family:var(--sq);font-weight:800;font-size:clamp(30px,11vw,42px);letter-spacing:-.03em;line-height:.9;
+      display:flex;align-items:center;gap:8px;max-width:100%}
+    h1 .nmtxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .caret{font-size:.42em;color:var(--muted);display:none}
+    .switchable .caret{display:inline}
+    .overlaysel{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;font-size:16px;
+      pointer-events:none}
+    .switchable .overlaysel{pointer-events:auto}
+    .meta{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;letter-spacing:.02em;line-height:1.6;white-space:nowrap}
+    .meta b{color:var(--coral)}
+    .hr{height:1px;background:var(--line);margin:15px 0 4px;position:relative}
+    .hr .cx{position:absolute;top:0}.hr .l{left:0}.hr .r{right:0}
+
+    /* ---- cells ---- */
+    main{display:block}
+    .cell{position:relative;background:var(--card);border:1px solid var(--line);
+      padding:13px 15px 13px;margin-top:16px}
+    .cell.ahead{border-color:var(--coral)}
+    .cell.behind{border-color:var(--warn)}
+    .cell.resolved{opacity:.5}
+    .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .tag .i{color:var(--coral)}
+    .cell.resolved .tag .i{color:var(--muted)}
+    .row2{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:5px}
+    .nm{font-family:var(--sq);font-weight:700;font-size:clamp(19px,5.6vw,22px);letter-spacing:-.02em;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cell.resolved .nm{text-decoration:line-through}
+    .last{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap;flex:none}
+    .last b{color:var(--ink);font-weight:700}
+    .ahead .last b{color:var(--coral)} .behind .last b{color:var(--warn)}
+
+    .ctl{display:flex;align-items:center;gap:7px;margin-top:13px;flex-wrap:wrap}
+    .grp{display:inline-flex;align-items:center;border:1px solid var(--line);background:var(--inset)}
+    .grp .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+      padding:0 3px 0 10px;flex:none}
+    .grp button{width:36px;height:38px;border:none;background:transparent;color:var(--body);
+      font-size:18px;font-family:var(--mono);line-height:1;flex:none}
+    .grp button:active{background:var(--ink);color:var(--bg)}
+    .grp .v{font-family:var(--mono);font-size:13px;font-weight:700;min-width:30px;text-align:center;
+      font-variant-numeric:tabular-nums;padding:0 2px}
+    .sp{flex:1 1 auto;min-width:8px}
+    .act{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+      height:38px;padding:0 15px;border:1px solid var(--line);background:transparent;color:var(--body);flex:none}
+    .act.skip:active{background:var(--inset)}
+    .act.done{border-color:var(--coral);color:var(--coral)}
+    .act.done:active{background:var(--coral);color:#fff}
+    .act.done.on{background:var(--coral);color:#fff}
+    .act.skip.on{background:var(--body);color:var(--bg);border-color:var(--body)}
+
+    /* crosshair corner ticks */
+    .cx{width:0;height:0}
+    .cx::before,.cx::after{content:"";position:absolute;background:var(--muted)}
+    .cx::before{left:-5px;top:-.5px;width:11px;height:1px}
+    .cx::after{top:-5px;left:-.5px;width:1px;height:11px}
+    .cell .cx{position:absolute}
+    .cell .tl{left:0;top:0}.cell .tr{right:0;top:0}.cell .bl{left:0;bottom:0}.cell .br{right:0;bottom:0}
+    .cell.ahead .cx::before,.cell.ahead .cx::after{background:var(--coral)}
+    .cell.behind .cx::before,.cell.behind .cx::after{background:var(--warn)}
+
+    .msg{font-family:var(--mono);color:var(--muted);text-align:center;padding:48px 18px;line-height:1.7;font-size:13px}
+    .msg .err{color:var(--warn)}
+
+    /* ---- settings dialog ---- */
+    dialog{background:var(--card);color:var(--ink);border:1px solid var(--line);width:min(92vw,460px);padding:0;
+      font-family:var(--sq)}
+    dialog::backdrop{background:rgba(0,0,0,.55)}
+    .dlg-h{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+      padding:14px 16px;border-bottom:1px solid var(--line)}
+    .dlg-b{padding:16px}
+    label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--muted);margin:0 0 6px}
+    input[type=text]{width:100%;background:var(--inset);color:var(--ink);border:1px solid var(--line);
+      padding:11px 12px;font-size:16px;font-family:var(--mono)}
+    .hint{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+    .err{font-family:var(--mono);font-size:11.5px;color:var(--warn);margin-top:8px;white-space:pre-wrap}
+    .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .btn{flex:1 1 auto;height:44px;border:1px solid var(--line);background:var(--inset);color:var(--ink);
+      font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+    .btn:active{background:var(--bg)}
+    .btn.primary{border-color:var(--coral);color:var(--coral)}
+    .btn.primary:active{background:var(--coral);color:#fff}
   </style>
 </head>
 <body>
   <header>
-    <select id="planSelect" aria-label="Select plan"></select>
-    <button class="iconbtn" id="openSettings" aria-label="Settings">&#9881;</button>
+    <div class="util">
+      <span class="wordmark">mono<b>/</b>tonic</span>
+      <div class="ur">
+        <button class="ico" id="themeToggle" aria-label="Toggle light or dark">&#9790;</button>
+        <button class="ico" id="openSettings" aria-label="Settings">&#9881;</button>
+      </div>
+    </div>
+    <div class="kick">Today’s session</div>
+    <div class="head">
+      <div class="titlewrap" id="titlewrap">
+        <h1><span class="nmtxt" id="planName">Daily</span><span class="caret">&#9662;</span></h1>
+        <select class="overlaysel" id="planSelect" aria-label="Switch plan"></select>
+      </div>
+      <div class="meta" id="sessionMeta"></div>
+    </div>
+    <div class="hr"><span class="cx l"></span><span class="cx r"></span></div>
   </header>
   <main id="session"></main>
 
   <dialog id="settings">
-    <h2>Settings</h2>
-    <label for="urlInput">Plans URL (TOML)</label>
-    <input type="text" id="urlInput" placeholder="https://gist.githubusercontent.com/.../raw/plans.toml" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
-    <div class="hint">Leave blank to use the bundled <code>plans.toml</code>.</div>
-    <div class="row">
-      <button class="btn" id="saveUrl">Save &amp; refresh</button>
-      <button class="btn" id="refreshPlans">Refresh</button>
-    </div>
-    <div class="row">
-      <button class="btn" id="restartSession">Restart session</button>
-    </div>
-    <div class="row">
-      <button class="btn" id="exportBackup">Export backup</button>
-      <button class="btn" id="importBackup">Import backup</button>
-    </div>
-    <div class="hint" id="fetchInfo"></div>
-    <div class="err" id="settingsErr"></div>
-    <div class="row">
-      <button class="btn" id="closeSettings">Close</button>
+    <div class="dlg-h">Settings</div>
+    <div class="dlg-b">
+      <label for="urlInput">Plans URL (TOML)</label>
+      <input type="text" id="urlInput" placeholder="https://gist.../raw/plans.toml" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <div class="hint">Leave blank to use the bundled <code>plans.toml</code>.</div>
+      <div class="row">
+        <button class="btn primary" id="saveUrl">Save &amp; refresh</button>
+        <button class="btn" id="refreshPlans">Refresh</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="restartSession">Restart session</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="exportBackup">Export</button>
+        <button class="btn" id="importBackup">Import</button>
+      </div>
+      <div class="hint" id="fetchInfo"></div>
+      <div class="err" id="settingsErr"></div>
+      <div class="row">
+        <button class="btn" id="closeSettings">Close</button>
+      </div>
     </div>
   </dialog>
 
