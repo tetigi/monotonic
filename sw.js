@@ -1,4 +1,4 @@
-const CACHE = 'monotonic-v7';
+const CACHE = 'monotonic-v8';
 const FONT_CACHE = 'monotonic-fonts-v1';
 const NET_TIMEOUT = 2500; // ms before falling back to cache on slow/flaky networks
 const SHELL = [
@@ -6,6 +6,7 @@ const SHELL = [
   'index.html',
   'app.js',
   'core.js',
+  'version.js',
   'vendor/toml.js',
   'manifest.webmanifest',
   'icons/icon-180.png',

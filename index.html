@@ -124,6 +124,12 @@
     .msg{font-family:var(--mono);color:var(--muted);text-align:center;padding:48px 18px;line-height:1.7;font-size:13px}
     .msg .err{color:var(--warn)}
 
+    /* ---- footer / build ref ---- */
+    .foot{margin-top:26px;padding-top:12px;text-align:center}
+    .foot a{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--muted);text-decoration:none;opacity:.75}
+    .foot a:active{color:var(--coral)}
+
     /* ---- settings dialog ---- */
     dialog{background:var(--card);color:var(--ink);border:1px solid var(--line);width:min(92vw,460px);padding:0;
       font-family:var(--sq)}
@@ -165,6 +171,7 @@
     <div class="hr"><span class="cx l"></span><span class="cx r"></span></div>
   </header>
   <main id="session"></main>
+  <footer class="foot"><a id="build" href="https://github.com/tetigi/monotonic" target="_blank" rel="noopener">build</a></footer>
 
   <dialog id="settings">
     <div class="dlg-h">Settings</div>
@@ -193,6 +200,7 @@
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>
 
+  <script src="version.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

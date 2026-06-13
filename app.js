@@ -389,9 +389,21 @@ function rebuildAfterPlansChange() {
   }
 }
 
+// --- build ref -------------------------------------------------------------
+function stampBuild() {
+  const el = $('build');
+  if (!el) return;
+  const ref = (typeof window !== 'undefined' && window.__BUILD__) || 'dev';
+  el.textContent = `build ${ref}`;
+  el.href = ref && ref !== 'dev'
+    ? `https://github.com/tetigi/monotonic/commit/${ref}`
+    : 'https://github.com/tetigi/monotonic';
+}
+
 // --- boot ------------------------------------------------------------------
 async function boot() {
   initTheme();
+  stampBuild();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }

@@ -44,8 +44,9 @@ You don't need to fork or host anything — just use the deployed app:
    copy its **raw** URL, and paste it into the app's ⚙ settings. Edit the gist anytime —
    no redeploy.
 
-Want your own copy? Fork it and enable **Settings → Pages → Deploy from `main` / root**;
-your app lives at `https://<you>.github.io/monotonic/`.
+Want your own copy? Fork it and set **Settings → Pages → Source → GitHub Actions** — the
+included workflow deploys on every push and stamps the running commit into the footer.
+Your app lives at `https://<you>.github.io/monotonic/`.
 
 ---
 
