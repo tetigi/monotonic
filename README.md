@@ -152,10 +152,8 @@ installed app once for a new worker to take over).
 
 ## Credits
 
-Shamelessly **vibe-coded** with Claude Code — described and iterated into shape rather
-than hand-written. The visual language (squarish display sans + monospace data,
-blueprint hairlines with crosshair ticks, coral accent) is **borrowed, with admiration,
-from [hex.tech](https://hex.tech)** — go check them out.
+Shamelessly **vibe-coded** with Claude Code. Visual language borrowed from
+[hex.tech](https://hex.tech).
 
 Type: [Chivo](https://fonts.google.com/specimen/Chivo),
 [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono),
