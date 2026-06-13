@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic — Brutalist Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#e8e6e0; --ink:#0a0a0a; --dim:#8a887f; --acc:#ff3b1d; --bord:2px solid #0a0a0a; }
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--ink);font-family:"Space Mono",monospace;-webkit-font-smoothing:antialiased}
+  body{max-width:480px;margin:0 auto;padding:20px 16px 60px;user-select:none}
+
+  .bar{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:10px}
+  .logo{font-size:18px;font-weight:700;letter-spacing:.06em}
+  .logo b{color:var(--acc)}
+  .meta{font-size:11px;color:var(--dim);letter-spacing:.1em;text-align:right;text-transform:uppercase}
+  .rulex{border-top:4px solid var(--ink);border-bottom:1px solid var(--ink);height:5px}
+
+  .grid{border:var(--bord);border-top:none}
+  .row{border-top:var(--bord)}
+  .row:first-child{border-top:none}
+  .row.up{box-shadow:inset 6px 0 0 var(--acc)}
+  .row.down{box-shadow:inset 6px 0 0 var(--acc)}
+  .head{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:10px;padding:12px 13px;cursor:pointer}
+  .idx{font-size:12px;color:var(--dim)}
+  .name{font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .spec{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .spec .x,.spec .w{color:var(--dim);font-weight:400}
+  .tag{font-size:11px;font-weight:700;margin-left:9px;letter-spacing:.05em}
+  .up .tag,.down .tag{color:var(--acc)} .same .tag{color:var(--dim)}
+  .last{grid-column:2 / 4;font-size:11px;color:var(--dim);letter-spacing:.06em;margin-top:4px}
+
+  .row.done .name{color:var(--dim);text-decoration:line-through}
+  .row.done{opacity:.5}
+  .row.done .idx{color:var(--acc)}
+
+  .ctl{display:none;border-top:var(--bord);background:#dedcd4}
+  .row.open .ctl{display:block}
+  .fieldrow{display:flex;align-items:center;border-bottom:var(--bord)}
+  .flab{width:74px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;padding-left:13px}
+  .stp{width:52px;height:46px;border:none;border-left:var(--bord);background:transparent;color:var(--ink);font-size:20px;font-weight:700;font-family:inherit}
+  .stp:active{background:var(--ink);color:var(--bg)}
+  .fval{flex:1;text-align:center;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+  .acts{display:flex}
+  .act{flex:1;height:50px;border:none;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;color:var(--ink)}
+  .act.skip{border-right:var(--bord);color:var(--dim)}
+  .act.done{background:var(--ink);color:var(--bg)}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="logo">MONO<b>/</b>TONIC</div>
+    <div class="meta">SAT — 2026.06.13<br>05 EXERCISES</div>
+  </div>
+  <div class="rulex"></div>
+  <div class="grid" id="list"></div>
+
+<script>
+const EX=[
+ {name:"Run",sets:1,val:10,unit:"min",last:10,cue:"same"},
+ {name:"Pull-ups",sets:3,val:7,unit:"reps",last:7,cue:"same"},
+ {name:"Wall Sits",sets:3,val:65,unit:"time",last:60,cue:"up",open:true},
+ {name:"Deadlift",sets:3,val:8,unit:"reps",weight:72.5,last:8,lastW:70,cue:"up"},
+ {name:"Push-ups",sets:3,val:15,unit:"reps",last:15,cue:"same",done:true},
+];
+const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+const valStr=(e,v=e.val)=>e.unit==="time"?mmss(v):e.unit==="min"?`${v}M`:`${v}`;
+function spec(e){
+  if(e.unit!=="reps"&&e.sets===1) return `<span class="spec">${valStr(e)}</span>`;
+  let s=`<span class="spec">${e.sets}<span class="x">×</span>${valStr(e)}`;
+  if(e.weight)s+=`<span class="w"> · ${e.weight}</span>`;
+  return s+"</span>";
+}
+function lastStr(e){
+  let s=e.unit!=="reps"&&e.sets===1?valStr(e,e.last):`${e.sets}×${valStr(e,e.last)}`;
+  if(e.lastW)s+=` · ${e.lastW}`;
+  return `LAST ${s}`;
+}
+const list=document.getElementById("list");
+EX.forEach((e,i)=>{
+  const row=document.createElement("div");
+  row.className=`row ${e.cue}${e.done?" done":""}${e.open?" open":""}`;
+  const tag=e.cue==="up"?"▲":e.cue==="down"?"▼":"=";
+  row.innerHTML=`
+    <div class="head">
+      <span class="idx">${e.done?"[x]":String(i+1).padStart(2,"0")}</span>
+      <span class="name">${e.name}</span>
+      <span>${spec(e)}<span class="tag">${tag}</span></span>
+      <span class="last">${lastStr(e)}</span>
+    </div>
+    <div class="ctl">
+      <div class="fieldrow"><span class="flab">Sets</span><span class="fval">${e.sets}</span><button class="stp">−</button><button class="stp">+</button></div>
+      <div class="fieldrow"><span class="flab">${e.unit==="time"?"Time":e.unit==="min"?"Min":"Reps"}</span><span class="fval">${valStr(e)}</span><button class="stp">−</button><button class="stp">+</button></div>
+      <div class="acts"><button class="act skip">Skip</button><button class="act done">Done</button></div>
+    </div>`;
+  row.querySelector(".head").onclick=()=>row.classList.toggle("open");
+  list.appendChild(row);
+});
+</script>
+</body>
+</html>

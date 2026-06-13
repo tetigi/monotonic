@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic — Design previews</title>
+<style>
+  :root{ --bg:#ffffff; --ink:#1f2328; --dim:#59636e; --line:#d8dee4; }
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,sans-serif;
+    max-width:480px;margin:0 auto;padding:32px 20px 60px;-webkit-font-smoothing:antialiased}
+  h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  p.intro{color:var(--dim);font-size:14px;margin:8px 0 22px;line-height:1.5}
+  a.card{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);
+    border-radius:12px;padding:16px;margin-bottom:12px}
+  a.card:active{background:#f6f8fa}
+  .t{font-size:18px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:9px}
+  .sw{width:14px;height:14px;border-radius:4px;border:1px solid #0002}
+  .d{font-size:13px;color:var(--dim);line-height:1.5}
+  details{margin-top:18px}
+  summary{font-size:12px;color:var(--dim);cursor:pointer}
+  details a{display:block;color:var(--dim);font-size:13px;padding:6px 0;text-decoration:none}
+</style>
+</head>
+<body>
+  <h1>Design previews</h1>
+  <p class="intro">Three takes, each in the style of a product you named. Same sample workout. Tap to open.</p>
+
+  <a class="card" href="s4-hexnb-light.html"><div class="t"><span class="sw" style="background:#f1efe9"></span>Hex Notebook · Light</div><div class="d">★ Newest. Square sans (Chivo) + mono + blueprint hairlines with crosshair ticks, coral accent. The square/fixed-width/lines look from their notebook & solutions pages — in light.</div></a>
+  <a class="card" href="s4-hexnb-dark.html"><div class="t"><span class="sw" style="background:#15131c"></span>Hex Notebook · Dark</div><div class="d">Same system on charcoal — closest to the real hex.tech product pages.</div></a>
+  <a class="card" href="s1-stripe.html"><div class="t"><span class="sw" style="background:linear-gradient(120deg,#635bff,#28c2ff)"></span>Stripe</div><div class="d">Clean white, navy ink, blurple buttons, signature gradient, soft-shadow card + progress bar.</div></a>
+  <a class="card" href="s2-hex.html"><div class="t"><span class="sw" style="background:#f7f3ec"></span>Hex.tech</div><div class="d">Warm cream canvas, Fraunces serif headings, colourful cell bars, violet primary. (Controls overflow on weighted rows — would wrap when built.)</div></a>
+  <a class="card" href="s3-github.html"><div class="t"><span class="sw" style="background:#1f883d"></span>GitHub</div><div class="d">Workout as a repo's Issues: open/closed icons, green Done, the monotonic gain as a <b>+2.5kg</b> green diff badge, muscle-group labels.</div></a>
+
+  <details>
+    <summary>Earlier experiments (you didn't like these)</summary>
+    <a href="v1-ledger.html">Ledger</a><a href="v2-paper.html">Paper</a><a href="v3-focus.html">Focus</a>
+    <a href="v6-brutal-light.html">Brutalist light</a><a href="v5-brutal-poster.html">Brutalist poster</a><a href="v4-brutal.html">Brutalist dark</a>
+  </details>
+
+  <p class="intro" style="margin-top:18px">Throwaway previews with fake data — the real app isn't touched until you pick.</p>
+</body>
+</html>

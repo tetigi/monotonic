@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic — Paper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f2ede3; --card:#fbf8f1; --ink:#211c16; --dim:#9a9082; --line:#e2dacb;
+    --rust:#b4502e; --good:#5f7a4f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Hanken Grotesk",sans-serif;-webkit-font-smoothing:antialiased}
+  body{max-width:480px;margin:0 auto;padding:30px 20px 60px;user-select:none}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:24px}
+  .title{font-family:"Newsreader",serif;font-size:40px;font-weight:500;letter-spacing:-.02em;line-height:.9}
+  .title em{font-style:italic;color:var(--rust)}
+  .sub{font-size:12px;color:var(--dim);font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+
+  .ex{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:12px}
+  .ex.done{opacity:.5}
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .name{font-family:"Newsreader",serif;font-size:23px;font-weight:500;letter-spacing:-.01em}
+  .ex.done .name{text-decoration:line-through}
+  .last{font-size:12px;color:var(--dim);white-space:nowrap}
+  .last b{color:var(--rust);font-weight:700}
+  .good .last b{color:var(--good)}
+
+  .controls{display:flex;align-items:center;gap:8px;margin-top:14px}
+  .grp{display:flex;align-items:center;gap:2px}
+  .glab{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-right:6px;font-weight:700}
+  .rd{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font-size:18px;line-height:1;font-family:inherit}
+  .rd:active{background:#eae2d3}
+  .v{font-variant-numeric:tabular-nums;font-size:19px;font-weight:700;min-width:34px;text-align:center}
+  .v small{font-size:11px;color:var(--dim);font-weight:600}
+  .sep{flex:1}
+  .go{width:38px;height:38px;border-radius:50%;border:none;background:var(--ink);color:var(--paper);font-size:17px}
+  .ex.done .go{background:var(--good)}
+  .skip{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:700;background:none;border:none;padding:8px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">Daily<em>.</em></div>
+    <div class="sub">Sat · 5</div>
+  </header>
+  <div id="list"></div>
+
+<script>
+const EX=[
+ {name:"Run",sets:1,val:10,unit:"min",last:10,good:false},
+ {name:"Pull-ups",sets:3,val:7,unit:"reps",last:7,good:false},
+ {name:"Wall Sits",sets:3,val:65,unit:"time",last:60,good:true},
+ {name:"Deadlift",sets:3,val:8,unit:"reps",weight:72.5,last:8,lastW:70,good:true},
+ {name:"Push-ups",sets:3,val:15,unit:"reps",last:15,done:true},
+];
+const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+const vstr=(e,v=e.val)=>e.unit==="time"?mmss(v):`${v}`;
+const ulab=e=>e.unit==="time"?"min":e.unit==="min"?"min":"reps";
+function lastStr(e){
+  let s=e.unit==="time"?`${e.sets}×${mmss(e.last)}`: e.unit==="min"?`${e.last} min`:`${e.sets}×${e.last}`;
+  if(e.lastW)s+=` · ${e.lastW}`;
+  return s;
+}
+const list=document.getElementById("list");
+EX.forEach(e=>{
+  const c=document.createElement("div");
+  c.className=`ex ${e.good?"good":""}${e.done?" done":""}`;
+  const unitTag=e.unit==="time"?'<small> m:s</small>':e.unit==="min"?'<small> min</small>':'';
+  c.innerHTML=`
+    <div class="top"><span class="name">${e.name}</span><span class="last">last <b>${lastStr(e)}</b></span></div>
+    <div class="controls">
+      ${e.unit==="reps"?`<div class="grp"><span class="glab">Sets</span><button class="rd">−</button><span class="v">${e.sets}</span><button class="rd">+</button></div>`:""}
+      <div class="grp"><span class="glab">${e.unit==="reps"?"Reps":e.unit==="time"?"Time":"Min"}</span><button class="rd">−</button><span class="v">${vstr(e)}${unitTag}</span><button class="rd">+</button></div>
+      ${e.weight?`<div class="grp"><span class="glab">Kg</span><button class="rd">−</button><span class="v">${e.weight}</span><button class="rd">+</button></div>`:""}
+      <span class="sep"></span>
+      <button class="skip">Skip</button>
+      <button class="go">✓</button>
+    </div>`;
+  list.appendChild(c);
+});
+</script>
+</body>
+</html>

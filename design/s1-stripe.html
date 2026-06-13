@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic — Stripe style</title>
+<style>
+  :root{
+    --ink:#0a2540; --body:#425466; --muted:#8792a2; --line:#e3e8ee;
+    --bg:#ffffff; --canvas:#f6f9fc; --brand:#635bff; --brandd:#5249e0;
+    --green:#3ecf8e; --greend:#1a936f;
+    --shadow:0 1px 1px rgba(10,37,64,.04),0 4px 14px rgba(10,37,64,.07);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--canvas);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;
+    max-width:480px;margin:0 auto;min-height:100dvh;user-select:none}
+  .grad{height:4px;background:linear-gradient(100deg,#a960ee 4%,#635bff 32%,#28c2ff 64%,#54e9b6 96%)}
+  .wrap{padding:22px 18px 60px}
+
+  .hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+  h1{font-size:24px;font-weight:680;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .badge{font-size:12px;font-weight:600;color:var(--brand);background:#f5f4ff;border:1px solid #e0ddff;
+    padding:5px 10px;border-radius:8px}
+
+  .prog{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+  .track{flex:1;height:7px;background:#eef2f7;border-radius:99px;overflow:hidden}
+  .fill{height:100%;width:20%;background:linear-gradient(90deg,#635bff,#28c2ff)}
+  .pct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+  .clab{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+    padding:14px 16px 10px}
+  .row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line)}
+  .nm{font-size:15px;font-weight:580;letter-spacing:-.01em}
+  .lt{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .lt .up{color:var(--greend);font-weight:600}
+  .left{flex:1;min-width:0}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+  .stepper button{width:30px;height:32px;border:none;background:#fff;color:var(--body);font-size:17px;line-height:1}
+  .stepper button:active{background:#f6f9fc}
+  .stepper .v{min-width:42px;text-align:center;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;
+    border-left:1px solid var(--line);border-right:1px solid var(--line);padding:0 4px;line-height:32px}
+  .go{border:none;background:var(--brand);color:#fff;font-size:13px;font-weight:600;font-family:var(--font);
+    padding:8px 12px;border-radius:8px;box-shadow:0 1px 2px rgba(99,91,255,.4)}
+  .go:active{background:var(--brandd)}
+  .row.done{background:#fbfdfe}
+  .row.done .nm{color:var(--muted);text-decoration:line-through}
+  .check{width:34px;height:34px;border-radius:8px;background:#eafaf3;color:var(--greend);border:1px solid #c7f0df;
+    font-size:16px;display:grid;place-items:center}
+  .meta{display:flex;gap:8px;align-items:center}
+</style>
+</head>
+<body>
+  <div class="grad"></div>
+  <div class="wrap">
+    <div class="hdr">
+      <div><h1>Daily</h1><div class="sub">Saturday · 5 exercises</div></div>
+      <span class="badge">1 / 5 done</span>
+    </div>
+    <div class="prog"><div class="track"><div class="fill"></div></div><span class="pct">20%</span></div>
+
+    <div class="card">
+      <div class="clab">Session</div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+<script>
+const EX=[
+ {name:"Run",sets:1,val:10,unit:"min",last:10,cue:"same"},
+ {name:"Pull-ups",sets:3,val:7,unit:"reps",last:7,cue:"same"},
+ {name:"Wall Sits",sets:3,val:65,unit:"time",last:60,cue:"up"},
+ {name:"Deadlift",sets:3,val:8,unit:"reps",weight:72.5,last:8,lastW:70,cue:"up"},
+ {name:"Push-ups",sets:3,val:15,unit:"reps",last:15,cue:"same",done:true},
+];
+const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+const vstr=(e,v=e.val)=>e.unit==="time"?mmss(v):e.unit==="min"?`${v} min`:`${v}`;
+function lastStr(e){
+  let s=e.unit!=="reps"&&e.sets===1?vstr(e,e.last):`${e.sets}×${vstr(e,e.last)}`;
+  if(e.lastW)s+=` · ${e.lastW}kg`;
+  let up=e.cue==="up"?' <span class="up">▲ ahead</span>':'';
+  return `last ${s}${up}`;
+}
+const primary=e=>e.unit==="time"?mmss(e.val):e.unit==="min"?`${e.val}`:`${e.sets}×${e.val}${e.weight?` · ${e.weight}`:""}`;
+const list=document.getElementById("list");
+EX.forEach(e=>{
+  const r=document.createElement("div");
+  r.className="row"+(e.done?" done":"");
+  r.innerHTML=`
+    <div class="left"><div class="nm">${e.name}</div><div class="lt">${lastStr(e)}</div></div>
+    ${e.done?'<div class="check">✓</div>':`
+    <div class="meta">
+      <div class="stepper"><button>−</button><span class="v">${primary(e)}</span><button>+</button></div>
+      <button class="go">Done</button>
+    </div>`}`;
+  list.appendChild(r);
+});
+</script>
+</body>
+</html>

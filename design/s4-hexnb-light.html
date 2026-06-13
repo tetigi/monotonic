@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic — Hex Notebook (light)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,400;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f1efe9; --ink:#1a1814; --body:#5a564d; --muted:#a09a8d; --line:#cfc9bc;
+    --coral:#fb503b; --card:#f7f5f0;
+    --sq:"Chivo",sans-serif; --mono:"JetBrains Mono",monospace; --serif:"Fraunces",serif;
+  }
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:var(--sq);color:var(--ink);-webkit-font-smoothing:antialiased;user-select:none;
+    background:var(--bg);
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:26px 26px;background-position:-1px -1px;
+    max-width:480px;margin:0 auto;min-height:100dvh;padding:26px 18px 60px}
+  /* fade the graph paper so it's a whisper */
+  body{background-blend-mode:normal}
+  .veil{position:fixed;inset:0;background:var(--bg);opacity:.86;pointer-events:none;z-index:0}
+  .stage{position:relative;z-index:1}
+
+  .kick{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--coral)}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;margin-top:1px}
+  h1{font-family:var(--sq);font-weight:800;font-size:42px;letter-spacing:-.03em;line-height:.9}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;letter-spacing:.02em;line-height:1.6}
+  .meta b{color:var(--coral)}
+  .hr{height:1px;background:var(--line);margin:16px 0;position:relative}
+  .hr .cx{position:absolute;top:0}.hr .l{left:0}.hr .r{right:0}
+
+  .cell{position:relative;background:var(--card);border:1px solid var(--line);padding:13px 15px 14px;margin-bottom:16px}
+  .cell.ahead{border-color:var(--coral)}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .tag .i{color:var(--coral)}
+  .row2{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:5px}
+  .nm{font-family:var(--sq);font-weight:700;font-size:22px;letter-spacing:-.02em}
+  .last{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .last b{color:var(--coral);font-weight:700}
+  .ctl{display:flex;align-items:center;gap:7px;margin-top:13px;flex-wrap:wrap}
+  .grp{display:inline-flex;align-items:center;border:1px solid var(--line);background:var(--bg)}
+  .grp .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 4px 0 9px}
+  .grp button{width:30px;height:32px;border:none;background:transparent;color:var(--body);font-size:17px;font-family:var(--mono)}
+  .grp button:active{background:var(--ink);color:var(--bg)}
+  .grp .v{font-family:var(--mono);font-size:13px;font-weight:700;min-width:26px;text-align:center;font-variant-numeric:tabular-nums}
+  .sp{flex:1 0 auto}
+  .go{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    border:1px solid var(--coral);background:transparent;color:var(--coral);padding:9px 15px}
+  .go:active{background:var(--coral);color:#fff}
+  .cell.done{opacity:.5}
+  .cell.done .nm{text-decoration:line-through}
+  .go.is{background:var(--coral);color:#fff}
+
+  /* crosshair corner ticks */
+  .cx{width:0;height:0;z-index:3}
+  .cx::before,.cx::after{content:"";position:absolute;background:var(--muted)}
+  .cx::before{left:-5px;top:-0.5px;width:11px;height:1px}
+  .cx::after{top:-5px;left:-0.5px;width:1px;height:11px}
+  .cell .cx{position:absolute}
+  .cell .tl{left:0;top:0}.cell .tr{right:0;top:0}.cell .bl{left:0;bottom:0}.cell .br{right:0;bottom:0}
+  .cell.ahead .cx::before,.cell.ahead .cx::after{background:var(--coral)}
+</style>
+</head>
+<body>
+<div class="veil"></div>
+<div class="stage">
+  <div class="kick">Today’s session</div>
+  <div class="head">
+    <h1>Daily</h1>
+    <div class="meta">SAT 2026.06.13<br><b>1</b>/5 DONE</div>
+  </div>
+  <div class="hr"><span class="cx l"></span><span class="cx r"></span></div>
+  <div id="list"></div>
+</div>
+
+<script>
+const EX=[
+ {name:"Run",sets:1,val:10,unit:"min",last:10,cue:"same"},
+ {name:"Pull-ups",sets:3,val:7,unit:"reps",last:7,cue:"same"},
+ {name:"Wall Sits",sets:3,val:65,unit:"time",last:60,cue:"up"},
+ {name:"Deadlift",sets:3,val:8,unit:"reps",weight:72.5,last:8,lastW:70,cue:"up"},
+ {name:"Push-ups",sets:3,val:15,unit:"reps",last:15,cue:"same",done:true},
+];
+const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+const vstr=(e,v=e.val)=>e.unit==="time"?mmss(v):`${v}`;
+const klab=e=>e.unit==="time"?"sec":e.unit==="min"?"min":"reps";
+function lastStr(e){
+  let s=e.unit==="time"?`${e.sets}×${mmss(e.last)}`:e.unit==="min"?`${e.last}m`:`${e.sets}×${e.last}`;
+  if(e.lastW)s+=` · ${e.lastW}`;
+  return s;
+}
+const list=document.getElementById("list");
+EX.forEach((e,i)=>{
+  const c=document.createElement("div");
+  c.className="cell"+(e.cue==="up"?" ahead":"")+(e.done?" done":"");
+  c.innerHTML=`
+    <span class="cx tl"></span><span class="cx tr"></span><span class="cx bl"></span><span class="cx br"></span>
+    <div class="tag"><span class="i">${String(i+1).padStart(2,"0")}</span> · ${klab(e)}${e.weight?" · kg":""}</div>
+    <div class="row2"><span class="nm">${e.name}</span><span class="last">last <b>${lastStr(e)}</b></span></div>
+    <div class="ctl">
+      ${e.unit==="reps"?`<div class="grp"><span class="k">set</span><button>−</button><span class="v">${e.sets}</span><button>+</button></div>`:""}
+      <div class="grp"><span class="k">${klab(e)}</span><button>−</button><span class="v">${vstr(e)}</span><button>+</button></div>
+      ${e.weight?`<div class="grp"><span class="k">kg</span><button>−</button><span class="v">${e.weight}</span><button>+</button></div>`:""}
+      <span class="sp"></span>
+      <button class="go ${e.done?"is":""}">${e.done?"✓ done":"done"}</button>
+    </div>`;
+  list.appendChild(c);
+});
+</script>
+</body>
+</html>

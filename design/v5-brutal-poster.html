@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic — Brutalist Poster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#e7e5df; --ink:#0a0a0a; --dim:#8c8a82; --acc:#ff3b1d; }
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--ink);font-family:"Space Mono",monospace;-webkit-font-smoothing:antialiased}
+  body{max-width:480px;margin:0 auto;padding:18px 16px 60px;user-select:none}
+
+  .bar{display:flex;align-items:baseline;justify-content:space-between;border-bottom:3px solid var(--ink);padding-bottom:8px}
+  .logo{font-family:"Anton",sans-serif;font-size:30px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+  .meta{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+
+  .ex{border-bottom:3px solid var(--ink);padding:14px 2px 16px}
+  .ex.done{opacity:.4}
+  .ln{display:flex;align-items:baseline;gap:10px}
+  .nm{font-family:"Anton",sans-serif;font-size:40px;line-height:.86;letter-spacing:.01em;text-transform:uppercase;flex:1}
+  .ex.done .nm{text-decoration:line-through;text-decoration-thickness:3px}
+  .pr{font-family:"Anton",sans-serif;font-size:40px;line-height:.86;font-variant-numeric:tabular-nums}
+  .pr .u{font-family:"Space Mono";font-size:15px;font-weight:700}
+  .up .pr{color:var(--acc)}
+  .meta2{display:flex;align-items:center;gap:14px;margin-top:12px}
+  .last{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .up .last b{color:var(--acc)}
+  .ctl{display:flex;gap:6px;margin-left:auto}
+  .sq{width:40px;height:40px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);font-size:20px;font-weight:700;font-family:inherit;line-height:1}
+  .sq:active{background:var(--ink);color:var(--bg)}
+  .sq.go{background:var(--ink);color:var(--bg);width:auto;padding:0 16px;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+  .ex.done .sq.go{background:var(--acc);border-color:var(--acc)}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="logo">Monotonic</div>
+    <div class="meta">Sat · 5</div>
+  </div>
+  <div id="list"></div>
+
+<script>
+const EX=[
+ {name:"Run",sets:1,val:10,unit:"min",last:10,cue:"same"},
+ {name:"Pull-ups",sets:3,val:7,unit:"reps",last:7,cue:"same"},
+ {name:"Wall Sits",sets:3,val:65,unit:"time",last:60,cue:"up"},
+ {name:"Deadlift",sets:3,val:8,unit:"reps",weight:72.5,last:8,lastW:70,cue:"up"},
+ {name:"Push-ups",sets:3,val:15,unit:"reps",last:15,cue:"same",done:true},
+];
+const mmss=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+function prStr(e){
+  if(e.unit==="time") return `${e.sets}×${mmss(e.val)}`;
+  if(e.unit==="min") return `${e.val}<span class="u">MIN</span>`;
+  let s=`${e.sets}×${e.val}`;
+  if(e.weight)s+=`<span class="u"> ${e.weight}KG</span>`;
+  return s;
+}
+function lastStr(e){
+  let s=e.unit==="time"?`${e.sets}×${mmss(e.last)}`:e.unit==="min"?`${e.last} min`:`${e.sets}×${e.last}`;
+  if(e.lastW)s+=` · ${e.lastW}`;
+  return s;
+}
+const list=document.getElementById("list");
+EX.forEach(e=>{
+  const c=document.createElement("div");
+  c.className=`ex ${e.cue}${e.done?" done":""}`;
+  c.innerHTML=`
+    <div class="ln"><span class="nm">${e.name}</span><span class="pr">${prStr(e)}</span></div>
+    <div class="meta2">
+      <span class="last">last <b>${lastStr(e)}</b></span>
+      <div class="ctl">
+        <button class="sq">−</button><button class="sq">+</button><button class="sq go">${e.done?"✓ Done":"Done"}</button>
+      </div>
+    </div>`;
+  list.appendChild(c);
+});
+</script>
+</body>
+</html>
