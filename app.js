@@ -33,6 +33,26 @@ const fmt = (n) => {
 const todayDate = () => new Date().toISOString().slice(0, 10);
 const todayDow = () => WEEKDAYS[new Date().getDay()];
 
+// Middle-field ("reps") display by unit: counts as-is, minutes as-is, time as m:ss.
+const fmtCount = (v, unit) => {
+  if (v == null) return '';
+  if (unit === 'time') {
+    const s = Math.max(0, Math.round(v));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+  return fmt(v);
+};
+const repLabel = (unit) => (unit === 'time' ? 'Time' : unit === 'min' ? 'Min' : 'Reps');
+// Parse "m:ss" or a plain number (seconds) back to seconds.
+const parseTime = (s) => {
+  s = String(s).trim();
+  if (s.includes(':')) {
+    const [m, sec] = s.split(':');
+    return (parseInt(m, 10) || 0) * 60 + (parseInt(sec, 10) || 0);
+  }
+  return parseFloat(s);
+};
+
 // --- plans loading ---------------------------------------------------------
 function getUrl() {
   const u = lsGet(K.url, '');
@@ -86,8 +106,8 @@ function renderSelect() {
 }
 
 function lastLabel(item) {
-  const { ref, hasWeight } = item;
-  const base = `last ${fmt(ref.sets)}\u00D7${fmt(ref.reps)}`;
+  const { ref, hasWeight, unit } = item;
+  const base = `last ${fmt(ref.sets)}\u00D7${fmtCount(ref.reps, unit)}`;
   return hasWeight ? `${base} \u00B7 ${fmt(ref.weight)}` : base;
 }
 
@@ -115,7 +135,7 @@ function renderSession() {
     const resolved = item.done || item.skipped ? ' resolved' : '';
     const rows = [
       stepperRow(i, 'sets', 'Sets', fmt(item.cur.sets)),
-      stepperRow(i, 'reps', 'Reps', fmt(item.cur.reps)),
+      stepperRow(i, 'reps', repLabel(item.unit), fmtCount(item.cur.reps, item.unit)),
       item.hasWeight ? stepperRow(i, 'weight', 'Weight', fmt(item.cur.weight)) : '',
     ].join('');
     return `
@@ -140,7 +160,7 @@ function updateCard(i) {
   if (!card) return renderSession();
   for (const field of ['sets', 'reps', 'weight']) {
     const el = $(`v-${i}-${field}`);
-    if (el) el.textContent = fmt(item.cur[field]);
+    if (el) el.textContent = field === 'reps' ? fmtCount(item.cur.reps, item.unit) : fmt(item.cur[field]);
   }
   const cue = cueFor(item);
   card.className = `card cue-${cue}${item.done || item.skipped ? ' resolved' : ''}`;
@@ -158,9 +178,10 @@ function escapeHtml(s) {
 function stepField(i, field, deltaUnits) {
   const item = active.items[i];
   if (field === 'weight' && !item.hasWeight) return;
-  const stepSize = field === 'weight' ? item.step : 1;
+  const stepSize = field === 'weight' ? item.step : field === 'reps' ? item.repStep : 1;
   let next = (item.cur[field] ?? 0) + deltaUnits * stepSize;
-  next = Math.max(0, Math.round(next * 1000) / 1000);
+  // weight keeps fractions; counts/minutes/seconds stay whole numbers.
+  next = Math.max(0, field === 'weight' ? Math.round(next * 1000) / 1000 : Math.round(next));
   item.cur[field] = next;
   lsSet(K.active, active);
   updateCard(i);
@@ -169,11 +190,14 @@ function stepField(i, field, deltaUnits) {
 function editField(i, field) {
   const item = active.items[i];
   if (field === 'weight' && !item.hasWeight) return;
-  const raw = prompt(`${item.name} \u2014 ${field}`, fmt(item.cur[field]));
+  const isTime = field === 'reps' && item.unit === 'time';
+  const shown = field === 'reps' ? fmtCount(item.cur.reps, item.unit) : fmt(item.cur[field]);
+  const fieldLabel = field === 'reps' ? repLabel(item.unit).toLowerCase() : field;
+  const raw = prompt(`${item.name} \u2014 ${fieldLabel}`, shown);
   if (raw == null) return;
-  const n = parseFloat(raw);
+  const n = isTime ? parseTime(raw) : parseFloat(raw);
   if (!Number.isFinite(n) || n < 0) return;
-  item.cur[field] = Math.round(n * 1000) / 1000;
+  item.cur[field] = field === 'weight' ? Math.round(n * 1000) / 1000 : Math.round(n);
   lsSet(K.active, active);
   updateCard(i);
 }

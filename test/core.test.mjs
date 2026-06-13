@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  parsePlans, pickTodaysPlan, referenceFor, buildItems, cueFor, normDay,
+  parsePlans, pickTodaysPlan, referenceFor, buildItems, cueFor, normDay, normUnit,
 } from '../core.js';
 
 const SAMPLE = `
@@ -106,4 +106,46 @@ test('cueFor flags decreases, holds, and increases', () => {
 test('normDay handles full names and whitespace', () => {
   assert.equal(normDay(' Tuesday '), 'tue');
   assert.equal(normDay('FRI'), 'fri');
+});
+
+test('normUnit accepts reps/min/time and falls back to reps', () => {
+  assert.equal(normUnit(undefined), 'reps');
+  assert.equal(normUnit('MIN'), 'min');
+  assert.equal(normUnit(' Time '), 'time');
+  assert.equal(normUnit('bogus'), 'reps');
+});
+
+test('buildItems carries unit and resolves rep step', () => {
+  const [plan] = parsePlans(`
+[[plan]]
+name = "D"
+  [[plan.exercise]]
+  name = "Run"
+  sets = 1
+  reps = 10
+  unit = "min"
+  [[plan.exercise]]
+  name = "Wall Sits"
+  sets = 3
+  reps = 60
+  unit = "time"
+  [[plan.exercise]]
+  name = "Pull-ups"
+  sets = 3
+  reps = 7
+  [[plan.exercise]]
+  name = "Plank"
+  sets = 1
+  reps = 30
+  unit = "time"
+  rep_step = 10
+`);
+  const [run, wall, pull, plank] = buildItems(plan, {});
+  assert.equal(run.unit, 'min');
+  assert.equal(run.repStep, 1);            // min defaults to 1
+  assert.equal(wall.unit, 'time');
+  assert.equal(wall.repStep, 15);          // time defaults to 15s
+  assert.equal(pull.unit, 'reps');
+  assert.equal(pull.repStep, 1);
+  assert.equal(plank.repStep, 10);         // explicit rep_step wins
 });

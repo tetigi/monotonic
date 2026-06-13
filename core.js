@@ -2,9 +2,18 @@
 import { parse } from './vendor/toml.js';
 
 export const DEFAULT_WEIGHT_STEP = 2.5;
+export const DEFAULT_TIME_STEP = 15; // seconds, for unit="time"
 export const WEEKDAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const UNITS = ['reps', 'min', 'time'];
 
 export const normDay = (d) => String(d).trim().toLowerCase().slice(0, 3);
+
+// Unit for the middle ("reps") field: "reps" (count), "min" (whole minutes),
+// or "time" (stored as seconds, shown mm:ss). Unknown values fall back to reps.
+export const normUnit = (u) => {
+  const n = String(u ?? 'reps').trim().toLowerCase();
+  return UNITS.includes(n) ? n : 'reps';
+};
 
 export function parsePlans(text) {
   const data = parse(text);
@@ -34,9 +43,12 @@ export function referenceFor(progress, ex) {
 export function buildItems(plan, progress) {
   return plan.exercise.map((ex) => {
     const ref = referenceFor(progress, ex);
+    const unit = normUnit(ex.unit);
     return {
       name: ex.name,
       step: Number(ex.weight_step) > 0 ? Number(ex.weight_step) : DEFAULT_WEIGHT_STEP,
+      unit,
+      repStep: Number(ex.rep_step) > 0 ? Number(ex.rep_step) : (unit === 'time' ? DEFAULT_TIME_STEP : 1),
       hasWeight: ref.weight != null,
       ref,
       cur: { sets: ref.sets, reps: ref.reps, weight: ref.weight },

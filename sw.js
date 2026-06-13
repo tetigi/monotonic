@@ -1,8 +1,9 @@
-const CACHE = 'monotonic-v1';
+const CACHE = 'monotonic-v2';
 const SHELL = [
   './',
   'index.html',
   'app.js',
+  'core.js',
   'vendor/toml.js',
   'manifest.webmanifest',
   'icons/icon-180.png',

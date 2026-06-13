@@ -1,16 +1,22 @@
 # Monotonic — exercise plans.
 # Each [[plan]] is a session: a name, the day(s) it applies to, and an ordered
 # list of exercises. `weight` is optional (omit for bodyweight). `weight_step`
-# is optional and sets the +/- increment (defaults to 2.5).
+# is optional and sets the +/- weight increment (defaults to 2.5).
+#
+# `unit` changes the middle field: "reps" (default, a count), "min" (whole
+# minutes), or "time" (shown mm:ss, stored as seconds). `rep_step` sets its
+# +/- increment (defaults to 1, or 15 for time). For unit="time" set `reps`
+# to the number of seconds (e.g. 60 = 1:00).
 
 [[plan]]
 name = "Daily"
 days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # same every day
 
   [[plan.exercise]]
-  name = "Run"            # 10 min run — reps = minutes
+  name = "Run"            # 10 min run (switch unit to "time" for mm:ss)
   sets = 1
   reps = 10
+  unit = "min"
 
   [[plan.exercise]]
   name = "Warmup"         # just tick Done
@@ -28,9 +34,10 @@ days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # same every day
   reps = 12
 
   [[plan.exercise]]
-  name = "Wall Sits"      # 1 minute — reps = seconds
+  name = "Wall Sits"      # 1 minute hold, shown mm:ss, +/- 15s
   sets = 3
   reps = 60
+  unit = "time"
 
   [[plan.exercise]]
   name = "Tricep Dips"
