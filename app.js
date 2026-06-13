@@ -272,20 +272,42 @@ function markSkip(i) {
 }
 
 // --- input wiring ----------------------------------------------------------
-let hold = { t: null, iv: null };
-const stopHold = () => { clearTimeout(hold.t); clearInterval(hold.iv); hold.t = hold.iv = null; };
-window.addEventListener('pointerup', stopHold);
-window.addEventListener('pointercancel', stopHold);
+// Steppers use a tap/hold model that ignores scroll gestures. Nothing fires on
+// pointerdown, so a swipe that happens to start on a +/- button scrolls the page
+// (or triggers the iOS home gesture) instead of changing a value. A quick tap
+// steps once; pressing and holding repeats; any meaningful drag cancels.
+const MOVE_TOL = 8; // px of travel that reclassifies a press as a scroll
+let hold = { btn: null, x: 0, y: 0, moved: false, held: false, t: null, iv: null };
+const endHold = () => { clearTimeout(hold.t); clearInterval(hold.iv); hold.t = hold.iv = null; };
+const stepFromBtn = (b) => stepField(+b.dataset.i, b.dataset.field, +b.dataset.delta);
 
 sessionEl.addEventListener('pointerdown', (e) => {
   const btn = e.target.closest('[data-act="step"]');
   if (!btn) return;
-  e.preventDefault();
-  const i = +btn.dataset.i, field = btn.dataset.field, delta = +btn.dataset.delta;
-  const fire = () => stepField(i, field, delta);
-  fire();
-  hold.t = setTimeout(() => { hold.iv = setInterval(fire, 110); }, 380);
+  hold.btn = btn; hold.x = e.clientX; hold.y = e.clientY;
+  hold.moved = false; hold.held = false;
+  hold.t = setTimeout(() => {              // press-and-hold → repeat
+    if (!hold.btn || hold.moved) return;
+    hold.held = true;
+    stepFromBtn(btn);
+    hold.iv = setInterval(() => stepFromBtn(btn), 110);
+  }, 380);
 });
+
+sessionEl.addEventListener('pointermove', (e) => {
+  if (!hold.btn || hold.moved) return;
+  if (Math.abs(e.clientX - hold.x) > MOVE_TOL || Math.abs(e.clientY - hold.y) > MOVE_TOL) {
+    hold.moved = true; // it's a scroll, not a tap — let the page move, fire nothing
+    endHold();
+  }
+});
+
+window.addEventListener('pointerup', () => {
+  const { btn, moved, held } = hold;
+  endHold(); hold.btn = null;
+  if (btn && !moved && !held) stepFromBtn(btn); // genuine tap → exactly one step
+});
+window.addEventListener('pointercancel', () => { endHold(); hold.btn = null; });
 
 sessionEl.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-act]');
