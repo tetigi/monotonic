@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="Monotonic — keep the numbers going up">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <g id="cx">
+      <line x1="-7" y1="0" x2="7" y2="0" stroke="#fb5d45" stroke-width="1.5"/>
+      <line x1="0" y1="-7" x2="0" y2="7" stroke="#fb5d45" stroke-width="1.5"/>
+    </g>
+  </defs>
+
+  <!-- canvas -->
+  <rect width="1280" height="420" fill="#15131c"/>
+  <rect width="1280" height="420" fill="url(#grid)"/>
+
+  <!-- blueprint frame + crosshair corners -->
+  <rect x="48" y="48" width="1184" height="324" fill="none" stroke="#fb5d45" stroke-opacity="0.45" stroke-width="1.5"/>
+  <use href="#cx" x="48" y="48"/>
+  <use href="#cx" x="1232" y="48"/>
+  <use href="#cx" x="48" y="372"/>
+  <use href="#cx" x="1232" y="372"/>
+
+  <!-- M/T mark -->
+  <g font-family="Helvetica, Arial, sans-serif" font-weight="800" text-anchor="middle">
+    <text x="196" y="278" font-size="190" letter-spacing="-6">
+      <tspan fill="#f0ece5">M</tspan><tspan fill="#fb5d45">/</tspan><tspan fill="#f0ece5">T</tspan>
+    </text>
+  </g>
+
+  <!-- divider with crosshair joints -->
+  <line x1="384" y1="48" x2="384" y2="372" stroke="#ffffff" stroke-opacity="0.12" stroke-width="1"/>
+  <use href="#cx" x="384" y="48"/>
+  <use href="#cx" x="384" y="372"/>
+
+  <!-- wordmark + copy -->
+  <text x="430" y="150" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" letter-spacing="6" fill="#6c6760">01 · TODAY'S SESSION</text>
+  <text x="426" y="262" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="116" letter-spacing="-4" fill="#f0ece5">MONOTONIC</text>
+  <text x="430" y="318" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="34" fill="#fb5d45">Keep the numbers going up.</text>
+  <text x="430" y="356" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" letter-spacing="3" fill="#6c6760">PWA · OFFLINE-FIRST · NO BACKEND · TOML PLANS</text>
+</svg>
