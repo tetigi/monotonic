@@ -1,4 +1,5 @@
-const CACHE = 'monotonic-v2';
+const CACHE = 'monotonic-v3';
+const NET_TIMEOUT = 2500; // ms before falling back to cache on slow/flaky networks
 const SHELL = [
   './',
   'index.html',
@@ -23,20 +24,36 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+function fetchWithTimeout(req, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(req, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
+// Network-first: when online, always get the latest shell and refresh the
+// cache; when offline/slow, fall back to the cached copy. A navigation is
+// keyed to index.html so the app still launches offline.
+async function networkFirst(req) {
+  const key = req.mode === 'navigate' ? 'index.html' : req;
+  try {
+    const fresh = await fetchWithTimeout(req, NET_TIMEOUT);
+    if (fresh && fresh.ok) (await caches.open(CACHE)).put(key, fresh.clone());
+    return fresh;
+  } catch {
+    const cached = await caches.match(key);
+    if (cached) return cached;
+    throw new Error('offline and not cached');
+  }
+}
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-
-  // App launch: always serve the cached shell so it opens offline.
-  if (req.mode === 'navigate') {
-    e.respondWith(caches.match('index.html').then((r) => r || fetch(req)));
-    return;
-  }
-
-  // Same-origin shell assets: cache-first. Everything else (e.g. remote plans
-  // TOML) is left to the network — the app keeps its own copy in localStorage.
   const url = new URL(req.url);
-  if (url.origin === self.location.origin) {
-    e.respondWith(caches.match(req).then((r) => r || fetch(req)));
+  // App shell (navigations + same-origin assets) is network-first. Cross-origin
+  // requests (e.g. a remote plans TOML) are left to the page, which keeps its
+  // own copy in localStorage.
+  if (req.mode === 'navigate' || url.origin === self.location.origin) {
+    e.respondWith(networkFirst(req));
   }
 });
