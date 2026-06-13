@@ -22,6 +22,33 @@ screen, works with no signal at the gym, and needs no backend or app store.
 
 ---
 
+## Getting started
+
+<p align="center">
+  <a href="https://tetigi.github.io/monotonic/">
+    <img alt="Open Monotonic" src="https://img.shields.io/badge/▶%20OPEN%20MONOTONIC-fb503b?style=for-the-badge&labelColor=1a1814">
+  </a>
+</p>
+
+<p align="center">
+  <img src="assets/screen-light.png" alt="Monotonic — light theme" width="45%">
+  &nbsp;&nbsp;
+  <img src="assets/screen-dark.png" alt="Monotonic — dark theme" width="45%">
+</p>
+
+You don't need to fork or host anything — just use the deployed app:
+
+1. **Add to your phone.** Open the link above in **Safari** (iOS) → Share → **Add to
+   Home Screen**. It launches full-screen, offline-capable, straight to today's session.
+2. **Point it at your plans.** Put your TOML in a [GitHub gist](https://gist.github.com),
+   copy its **raw** URL, and paste it into the app's ⚙ settings. Edit the gist anytime —
+   no redeploy.
+
+Want your own copy? Fork it and enable **Settings → Pages → Deploy from `main` / root**;
+your app lives at `https://<you>.github.io/monotonic/`.
+
+---
+
 ## What it does
 
 - **Opens to today's session.** Plans are tagged with the day(s) they apply to; the
@@ -89,21 +116,6 @@ days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # when it applies
 **Plan fields:** `name`, `days` (any of `mon`…`sun` or full names, case-insensitive),
 and an ordered list of `[[plan.exercise]]`. Renaming an exercise starts its progress
 fresh (identity is the name).
-
----
-
-## Install
-
-You don't need to fork or host anything — just use the deployed app:
-
-1. **Add to your phone.** Open the URL in **Safari** (iOS) → Share → **Add to Home
-   Screen**. It launches full-screen, offline-capable, straight to today's session.
-2. **Point it at your plans.** Put your TOML in a [GitHub gist](https://gist.github.com),
-   copy its **raw** URL, and paste it into the app's ⚙ settings. Edit the gist anytime —
-   no redeploy.
-
-Want your own copy? Fork it and enable **Settings → Pages → Deploy from `main` / root**;
-your app lives at `https://<you>.github.io/monotonic/`.
 
 ## Settings (⚙)
 
