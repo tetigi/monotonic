@@ -1,12 +1,12 @@
-const CACHE = 'monotonic-v9';
-const FONT_CACHE = 'monotonic-fonts-v1';
+// Distinct cache namespace from the main app: CacheStorage is shared per-origin
+// and this SW lives under /classic/, so it must never touch the main app's caches.
+const CACHE = 'monotonic-classic-v1';
 const NET_TIMEOUT = 2500; // ms before falling back to cache on slow/flaky networks
 const SHELL = [
   './',
   'index.html',
   'app.js',
   'core.js',
-  'version.js',
   'vendor/toml.js',
   'manifest.webmanifest',
   'icons/icon-180.png',
@@ -19,12 +19,10 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  const keep = [CACHE, FONT_CACHE];
   e.waitUntil(
     caches.keys()
-      // Prune our own stale caches, but never the /classic/ sub-app's
-      // (monotonic-classic-*) — CacheStorage is shared across the origin.
-      .then((keys) => Promise.all(keys.filter((k) => !keep.includes(k) && !k.startsWith('monotonic-classic')).map((k) => caches.delete(k))))
+      // Only ever prune our own old classic caches; leave the main app's alone.
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('monotonic-classic') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -51,33 +49,13 @@ async function networkFirst(req) {
   }
 }
 
-// Cache-first: for immutable third-party assets (web fonts). Cached on first
-// online load so the custom type survives offline.
-async function cacheFirst(req, cacheName) {
-  const cached = await caches.match(req);
-  if (cached) return cached;
-  const fresh = await fetch(req);
-  if (fresh && (fresh.ok || fresh.type === 'opaque')) (await caches.open(cacheName)).put(req, fresh.clone());
-  return fresh;
-}
-
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-
-  // The /classic/ sub-app is a self-contained PWA with its own service worker.
-  // Our scope (/monotonic/) nests over it, so we must NOT handle its requests —
-  // doing so would cache classic pages under this app's index.html key.
-  if (url.pathname.includes('/classic/')) return;
-
-  if (url.host === 'fonts.googleapis.com' || url.host === 'fonts.gstatic.com') {
-    e.respondWith(cacheFirst(req, FONT_CACHE));
-    return;
-  }
-  // App shell (navigations + same-origin assets) is network-first. Other
-  // cross-origin requests (e.g. a remote plans TOML) are left to the page,
-  // which keeps its own copy in localStorage.
+  // App shell (navigations + same-origin assets) is network-first. Cross-origin
+  // requests (e.g. a remote plans TOML) are left to the page, which keeps its
+  // own copy in localStorage.
   if (req.mode === 'navigate' || url.origin === self.location.origin) {
     e.respondWith(networkFirst(req));
   }
