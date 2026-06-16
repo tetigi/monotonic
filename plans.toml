@@ -7,6 +7,13 @@
 # minutes), or "time" (shown mm:ss, stored as seconds). `rep_step` sets its
 # +/- increment (defaults to 1, or 15 for time). For unit="time" set `reps`
 # to the number of seconds (e.g. 60 = 1:00).
+#
+# `rest_days` (optional, top-level) lists weekdays to take off. On a rest day
+# the app shows a "Rest day" screen instead of auto-loading a plan; you can
+# still switch plan to train anyway. Names accept any case/length, e.g.
+# rest_days = ["sun"]  or  rest_days = ["Saturday", "sun"].
+
+rest_days = ["sun"]
 
 [[plan]]
 name = "Daily"
