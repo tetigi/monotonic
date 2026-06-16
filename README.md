@@ -64,8 +64,8 @@ Your app lives at `https://<you>.github.io/monotonic/`.
 - **Done / Skip.** "Done" records your numbers as the new reference; "Skip" leaves them.
 - **Tick off sets.** Each card has a small square counter showing **sets left**. Tap it
   to count one off; at zero the exercise auto-marks **done** (manual "Done" still works).
-- **Skip nudge.** Skip the same exercise **2+ sessions in a row** and its card flags it
-  (`skipped 3× — drop it or do it today`) so you either commit or cut it. Doing it
+- **Consecutive skips.** Skip the same exercise **2+ sessions in a row** and its card
+  shows a quiet `skipped 3×` note, so habitual skips are visible at a glance. Doing it
   clears the streak.
 - **Resumes mid-workout, resets daily.** Reopen the same day and your ticks are still
   there; a new day starts fresh, pre-filled with last time's numbers.
