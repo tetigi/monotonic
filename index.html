@@ -96,9 +96,9 @@
       margin-top:6px;line-height:1.4}
     .nudge b{color:var(--coral);font-weight:700}
 
-    /* controls (left, wrapping) + the sets-tick pinned bottom-right */
-    .ctlwrap{display:flex;align-items:flex-end;gap:7px;margin-top:13px}
-    .ctl{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;flex-wrap:wrap}
+    /* steppers share their own row (full width); skip/done + sets-tick on the next */
+    .ctl{display:flex;align-items:center;gap:7px;margin-top:13px;flex-wrap:wrap}
+    .acts{display:flex;align-items:center;gap:7px;margin-top:7px}
     .grp{display:inline-flex;align-items:center;border:1px solid var(--line);background:var(--inset)}
     .grp .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
       padding:0 3px 0 10px;flex:none}

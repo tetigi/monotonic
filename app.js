@@ -264,13 +264,11 @@ function renderSession() {
         <div class="tag">${tag}</div>
         <div class="row2"><span class="nm">${escapeHtml(item.name)}</span><span class="last">${lastLabel(item)}</span></div>
         ${nudge}
-        <div class="ctlwrap">
-          <div class="ctl">
-            ${groups.join('')}
-            <span class="sp"></span>
-            <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
-            <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
-          </div>
+        <div class="ctl">${groups.join('')}</div>
+        <div class="acts">
+          <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
+          <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
+          <span class="sp"></span>
           <button class="tick${item.done ? ' on' : ''}" data-act="tick" data-i="${i}" aria-label="${tickAria(item)}"><span class="tk">sets</span><span class="tv">${tickLabel(item)}</span></button>
         </div>
       </section>`;
