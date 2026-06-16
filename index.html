@@ -116,6 +116,8 @@
       font-variant-numeric:tabular-nums;text-align:center;padding:0}
     .tick:active{background:var(--coral);color:#fff}
     .tick.on{background:var(--coral);color:#fff}
+    /* On a skipped cell the tick is a no-op — hide it; keep the done ✓ (.on). */
+    .cell.resolved .tick:not(.on){display:none}
 
     /* crosshair corner ticks */
     .cx{width:0;height:0}

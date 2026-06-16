@@ -193,6 +193,12 @@ function stepperGroup(i, field, key, value) {
 
 // The tick control's face: a check when finished, else the sets-remaining count.
 const tickLabel = (item) => (item.done ? '✓' : String(Math.max(0, item.setsLeft ?? 0)));
+// Spoken label tracks the visible state (the face is just a glyph/number).
+const tickAria = (item) => {
+  if (item.done) return 'All sets done';
+  const n = Math.max(0, item.setsLeft ?? 0);
+  return `${n} set${n === 1 ? '' : 's'} remaining, tap to tick one off`;
+};
 
 function cellClass(item) {
   if (item.done || item.skipped) return 'resolved';
@@ -233,7 +239,7 @@ function renderSession() {
           <span class="sp"></span>
           <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
           <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
-          <button class="tick${item.done ? ' on' : ''}" data-act="tick" data-i="${i}" aria-label="Tick off a set">${tickLabel(item)}</button>
+          <button class="tick${item.done ? ' on' : ''}" data-act="tick" data-i="${i}" aria-label="${tickAria(item)}">${tickLabel(item)}</button>
         </div>
       </section>`;
   }).join('');
@@ -253,7 +259,7 @@ function updateCard(i) {
   if (d) { d.classList.toggle('on', item.done); d.textContent = item.done ? '✓ done' : 'done'; }
   card.querySelector('.act.skip')?.classList.toggle('on', item.skipped);
   const t = card.querySelector('.tick');
-  if (t) { t.classList.toggle('on', item.done); t.textContent = tickLabel(item); }
+  if (t) { t.classList.toggle('on', item.done); t.textContent = tickLabel(item); t.setAttribute('aria-label', tickAria(item)); }
   updateMeta();
 }
 
