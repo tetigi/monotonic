@@ -256,7 +256,7 @@ function renderSession() {
     const idx = String(i + 1).padStart(2, '0');
     const tag = `<span class="i">${idx}</span> · ${groupKey(item.unit)}${item.hasWeight ? ' · kg' : ''}`;
     const nudge = showNudge(item)
-      ? `<div class="nudge">skipped ${skipStreakOf(item.name)}× — drop it or do it today</div>`
+      ? `<div class="nudge">skipped <b>${skipStreakOf(item.name)}×</b></div>`
       : '';
     return `
       <section class="cell ${cellClass(item)}" id="card-${i}">
