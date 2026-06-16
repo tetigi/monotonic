@@ -122,6 +122,12 @@ test('reconcileSkipStreaks counts a new exercise from zero', () => {
   assert.deepEqual(reconcileSkipStreaks({}, [mkItem('Dips', { skipped: true })]), { Dips: 1 });
 });
 
+test('reconcileSkipStreaks preserves streaks for exercises absent from the session', () => {
+  // Exercise dropped from today's plan keeps its prior streak untouched.
+  assert.deepEqual(reconcileSkipStreaks({ Bench: 3 }, [mkItem('Squat', { done: true })]),
+    { Bench: 3, Squat: 0 });
+});
+
 test('reconcileSkipStreaks: done beats skipped if both somehow set', () => {
   // markDone clears skipped, but be defensive: done should win and reset.
   const next = reconcileSkipStreaks({ Bench: 3 }, [mkItem('Bench', { done: true, skipped: true })]);

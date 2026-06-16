@@ -33,6 +33,11 @@ const $ = (id) => document.getElementById(id);
 const sessionEl = $('session');
 const selectEl = $('planSelect');
 
+// Consecutive past-session skips for an exercise, and whether that warrants the
+// "habitually skipped" nudge (only while it's still unresolved this session).
+const skipStreakOf = (name) => skipStreaks[name] || 0;
+const showNudge = (item) => !item.done && skipStreakOf(item.name) >= SKIP_NUDGE_AT;
+
 // --- formatting ------------------------------------------------------------
 const fmt = (n) => {
   if (n == null) return '';
@@ -250,9 +255,8 @@ function renderSession() {
     if (item.hasWeight) groups.push(stepperGroup(i, 'weight', 'kg', fmt(item.cur.weight)));
     const idx = String(i + 1).padStart(2, '0');
     const tag = `<span class="i">${idx}</span> · ${groupKey(item.unit)}${item.hasWeight ? ' · kg' : ''}`;
-    const streak = skipStreaks[item.name] || 0;
-    const nudge = (streak >= SKIP_NUDGE_AT && !item.done)
-      ? `<div class="nudge">skipped ${streak}× — drop it or do it today</div>`
+    const nudge = showNudge(item)
+      ? `<div class="nudge">skipped ${skipStreakOf(item.name)}× — drop it or do it today</div>`
       : '';
     return `
       <section class="cell ${cellClass(item)}" id="card-${i}">
@@ -288,10 +292,10 @@ function updateCard(i) {
   card.querySelector('.act.skip')?.classList.toggle('on', item.skipped);
   const t = card.querySelector('.tick');
   if (t) { t.classList.toggle('on', item.done); t.querySelector('.tv').textContent = tickLabel(item); t.setAttribute('aria-label', tickAria(item)); }
-  // The nudge hides as soon as the exercise is done (its streak is also zeroed).
+  // The nudge only ever clears in place (done zeroes the streak); it never needs
+  // to appear mid-session, since a live skip toggle doesn't raise the count.
   const nudgeEl = card.querySelector('.nudge');
-  const streak = skipStreaks[item.name] || 0;
-  if (nudgeEl && (item.done || streak < SKIP_NUDGE_AT)) nudgeEl.remove();
+  if (nudgeEl && !showNudge(item)) nudgeEl.remove();
   updateMeta();
 }
 
@@ -344,8 +348,8 @@ function markDone(i) {
     item.done = true;
     item.skipped = false;
     item.setsLeft = 0; // done means nothing left to tick
-    // Doing it clears the nudge straight away (reconcile would too, but this
-    // keeps the live cell honest before the next session rolls over).
+    // Doing it ends the streak now, so the nudge clears in this session rather
+    // than waiting for the next-day reconcile.
     if (skipStreaks[item.name]) { skipStreaks[item.name] = 0; lsSet(K.skips, skipStreaks); }
   }
   lsSet(K.progress, progress);
