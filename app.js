@@ -234,12 +234,14 @@ function renderSession() {
         <span class="cx tl"></span><span class="cx tr"></span><span class="cx bl"></span><span class="cx br"></span>
         <div class="tag">${tag}</div>
         <div class="row2"><span class="nm">${escapeHtml(item.name)}</span><span class="last">${lastLabel(item)}</span></div>
-        <div class="ctl">
-          ${groups.join('')}
-          <span class="sp"></span>
-          <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
-          <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
-          <button class="tick${item.done ? ' on' : ''}" data-act="tick" data-i="${i}" aria-label="${tickAria(item)}">${tickLabel(item)}</button>
+        <div class="ctlwrap">
+          <div class="ctl">
+            ${groups.join('')}
+            <span class="sp"></span>
+            <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
+            <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
+          </div>
+          <button class="tick${item.done ? ' on' : ''}" data-act="tick" data-i="${i}" aria-label="${tickAria(item)}"><span class="tk">sets</span><span class="tv">${tickLabel(item)}</span></button>
         </div>
       </section>`;
   }).join('');
@@ -259,7 +261,7 @@ function updateCard(i) {
   if (d) { d.classList.toggle('on', item.done); d.textContent = item.done ? '✓ done' : 'done'; }
   card.querySelector('.act.skip')?.classList.toggle('on', item.skipped);
   const t = card.querySelector('.tick');
-  if (t) { t.classList.toggle('on', item.done); t.textContent = tickLabel(item); t.setAttribute('aria-label', tickAria(item)); }
+  if (t) { t.classList.toggle('on', item.done); t.querySelector('.tv').textContent = tickLabel(item); t.setAttribute('aria-label', tickAria(item)); }
   updateMeta();
 }
 
