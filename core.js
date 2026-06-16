@@ -29,6 +29,18 @@ export function parsePlans(text) {
   return list;
 }
 
+// Top-level `rest_days` (sibling to [[plan]]): a weekday or array of weekdays,
+// any case/length. Returns normalized 3-letter names; absent/invalid -> [].
+export function parseRestDays(text) {
+  const data = parse(text);
+  const raw = data.rest_days;
+  if (raw == null) return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+  return list.map(normDay);
+}
+
+export const isRestDay = (restDays, dow) => restDays.includes(dow);
+
 export function pickTodaysPlan(plans, dow) {
   if (!plans.length) return null;
   return plans.find((p) => p.days.includes(dow)) || plans[0];

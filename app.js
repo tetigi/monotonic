@@ -1,4 +1,4 @@
-import { WEEKDAYS, parsePlans, pickTodaysPlan, buildItems, cueFor } from './core.js';
+import { WEEKDAYS, parsePlans, parseRestDays, isRestDay, pickTodaysPlan, buildItems, cueFor } from './core.js';
 
 const DEFAULT_URL = './plans.toml';
 
@@ -18,6 +18,8 @@ const lsGet = (k, fallback) => {
 const lsSet = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 let plans = [];      // [{name, days:[...], exercise:[...]}]
+let restDays = [];   // normalized weekday names today's session is skipped on
+let resting = false; // true when showing the rest-day screen (no auto session)
 let progress = lsGet(K.progress, {});   // { [name]: {sets, reps, weight|null} }
 let active = lsGet(K.active, null);      // {planName, date, items:[...]}
 
@@ -100,16 +102,26 @@ function loadCachedPlans() {
   try { return parsePlans(c.toml); } catch { return null; }
 }
 
+// Re-read rest_days from the cached TOML; on any failure assume no rest days.
+function loadRestDays() {
+  const c = lsGet(K.cache, null);
+  if (!c || !c.toml) return [];
+  try { return parseRestDays(c.toml); } catch { return []; }
+}
+
 // --- session building ------------------------------------------------------
 function buildSession(plan) {
   active = { planName: plan.name, date: todayDate(), items: buildItems(plan, progress) };
+  resting = false; // a manual (or auto) build leaves the rest screen
   lsSet(K.active, active);
 }
 
 function planByName(name) { return plans.find((p) => p.name === name); }
 
 function ensureSession() {
-  if (active && active.date === todayDate() && active.items?.length) return; // resume
+  if (active && active.date === todayDate() && active.items?.length) { resting = false; return; } // resume
+  if (isRestDay(restDays, todayDow())) { resting = true; return; } // rest day: no auto session
+  resting = false;
   const plan = pickTodaysPlan(plans, todayDow());
   if (plan) buildSession(plan);
 }
@@ -130,16 +142,27 @@ function updateMeta() {
 function renderSelect() {
   const dow = todayDow();
   selectEl.innerHTML = '';
+  // On the rest screen, lead with a disabled placeholder so picking any real
+  // plan fires a change (and so no plan looks pre-selected).
+  if (resting) {
+    const ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = 'Choose a plan…';
+    ph.disabled = true;
+    ph.selected = true;
+    selectEl.appendChild(ph);
+  }
   for (const p of plans) {
     const o = document.createElement('option');
     o.value = p.name;
     o.textContent = p.days.includes(dow) ? `${p.name} · today` : p.name;
-    if (active && p.name === active.planName) o.selected = true;
+    if (!resting && active && p.name === active.planName) o.selected = true;
     selectEl.appendChild(o);
   }
-  const name = active?.planName || plans[0]?.name || 'Monotonic';
+  const name = resting ? 'Rest day' : (active?.planName || plans[0]?.name || 'Monotonic');
   $('planName').textContent = name;
-  $('titlewrap').classList.toggle('switchable', plans.length > 1);
+  // Resting: force the switcher on (even for a single plan) so a plan can be picked.
+  $('titlewrap').classList.toggle('switchable', resting || plans.length > 1);
   updateMeta();
 }
 
@@ -168,6 +191,11 @@ function cellClass(item) {
 function renderSession() {
   if (!plans.length) {
     sessionEl.innerHTML = `<div class="msg">No plans loaded.<br>Open settings (⚙) to set your Plans URL.</div>`;
+    updateMeta();
+    return;
+  }
+  if (resting) {
+    sessionEl.innerHTML = `<div class="msg">REST DAY — nothing scheduled.<br>Switch plan (▾ above) to train anyway.</div>`;
     updateMeta();
     return;
   }
@@ -333,6 +361,7 @@ async function doRefresh() {
   try {
     await refreshPlans();
     plans = loadCachedPlans() || [];
+    restDays = loadRestDays();
     rebuildAfterPlansChange();
     const c = lsGet(K.cache, null);
     $('fetchInfo').textContent = `Last fetched ${new Date(c.fetchedAt).toLocaleString()}`;
@@ -370,7 +399,7 @@ $('importFile').addEventListener('change', async (e) => {
     if (data.progress) { progress = data.progress; lsSet(K.progress, progress); }
     if (data.active) { active = data.active; lsSet(K.active, active); }
     if (typeof data.plansUrl === 'string') lsSet(K.url, data.plansUrl);
-    renderSelect(); renderSession();
+    rebuildAfterPlansChange(); // re-evaluate rest day / session against imported state
     $('settingsErr').textContent = 'Backup imported.';
   } catch (err) {
     $('settingsErr').textContent = `Import failed: ${err.message}`;
@@ -380,7 +409,8 @@ $('importFile').addEventListener('change', async (e) => {
 });
 
 function rebuildAfterPlansChange() {
-  if (active && planByName(active.planName) && active.date === todayDate()) {
+  if (active && planByName(active.planName) && active.date === todayDate() && active.items?.length) {
+    resting = false; // an in-progress session for today wins over the rest screen
     renderSelect(); renderSession(); // keep current session
   } else {
     ensureSession();
@@ -411,17 +441,20 @@ async function boot() {
   const cached = loadCachedPlans();
   if (cached) {
     plans = cached;
+    restDays = loadRestDays();
     ensureSession();
     renderSelect();
     renderSession();
     refreshPlans().then(() => {
       plans = loadCachedPlans() || plans;
-      renderSelect();
+      restDays = loadRestDays();
+      rebuildAfterPlansChange(); // a refresh may flip today's rest-day state
     }).catch(() => {}); // offline: keep cached
   } else {
     try {
       await refreshPlans();
       plans = loadCachedPlans() || [];
+      restDays = loadRestDays();
       ensureSession();
       renderSelect();
       renderSession();

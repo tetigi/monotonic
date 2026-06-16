@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parsePlans, pickTodaysPlan, referenceFor, buildItems, cueFor, normDay, normUnit,
+  parseRestDays, isRestDay,
 } from '../core.js';
 
 const SAMPLE = `
@@ -106,6 +107,29 @@ test('cueFor flags decreases, holds, and increases', () => {
 test('normDay handles full names and whitespace', () => {
   assert.equal(normDay(' Tuesday '), 'tue');
   assert.equal(normDay('FRI'), 'fri');
+});
+
+test('parseRestDays reads an array and normalizes case/length', () => {
+  assert.deepEqual(parseRestDays('rest_days = ["Sun", "SATURDAY"]'), ['sun', 'sat']);
+});
+
+test('parseRestDays accepts a single string', () => {
+  assert.deepEqual(parseRestDays('rest_days = "sunday"'), ['sun']);
+});
+
+test('parseRestDays returns [] when absent', () => {
+  assert.deepEqual(parseRestDays('[[plan]]\nname="x"'), []);
+  assert.deepEqual(parseRestDays(SAMPLE), []);
+});
+
+test('parseRestDays coexists with [[plan]] entries', () => {
+  assert.deepEqual(parseRestDays(`rest_days = ["sun"]\n${SAMPLE}`), ['sun']);
+});
+
+test('isRestDay tests membership against normalized days', () => {
+  assert.equal(isRestDay(['sun', 'sat'], 'sun'), true);
+  assert.equal(isRestDay(['sun'], 'mon'), false);
+  assert.equal(isRestDay([], 'mon'), false);
 });
 
 test('normUnit accepts reps/min/time and falls back to reps', () => {
