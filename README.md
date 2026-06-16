@@ -9,7 +9,7 @@
   <img alt="Offline-first" src="https://img.shields.io/badge/offline-first-fb503b?style=flat-square">
   <img alt="Backend" src="https://img.shields.io/badge/backend-none-1a1814?style=flat-square">
   <img alt="Build step" src="https://img.shields.io/badge/build_step-none-1a1814?style=flat-square">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-11%20passing-1a936f?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-24%20passing-1a936f?style=flat-square">
 </p>
 
 A phone-first gym session tracker. Open it and today's workout is right there — no
@@ -54,11 +54,19 @@ Your app lives at `https://<you>.github.io/monotonic/`.
 
 - **Opens to today's session.** Plans are tagged with the day(s) they apply to; the
   app auto-selects today's.
+- **Rest days.** Mark weekdays off (`rest_days` in your TOML); on a rest day the app
+  shows a **Rest day** screen instead of auto-loading a session. You can still switch
+  to any plan (▾ next to the title) to train anyway.
 - **Touch-first.** Big `−`/`+` steppers for sets, reps, and weight — no keyboard during
   a workout (tap a number for manual entry).
 - **Monotonic cue.** Each card shows `last 3×8 · 70`. Beat it → coral (**ahead**); drop
   below → amber (**behind**).
 - **Done / Skip.** "Done" records your numbers as the new reference; "Skip" leaves them.
+- **Tick off sets.** Each card has a small square counter showing **sets left**. Tap it
+  to count one off; at zero the exercise auto-marks **done** (manual "Done" still works).
+- **Skip nudge.** Skip the same exercise **2+ sessions in a row** and its card flags it
+  (`skipped 3× — drop it or do it today`) so you either commit or cut it. Doing it
+  clears the streak.
 - **Resumes mid-workout, resets daily.** Reopen the same day and your ticks are still
   there; a new day starts fresh, pre-filled with last time's numbers.
 - **Light / dark theme** and **works offline.**
@@ -78,6 +86,8 @@ Plans live in a TOML file the app fetches from a URL you control (or the bundled
 [`plans.toml`](plans.toml)). One file holds all your plans.
 
 ```toml
+rest_days = ["sun"]   # optional, top-level: weekday(s) to take off
+
 [[plan]]
 name = "Daily"
 days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # when it applies
@@ -118,13 +128,19 @@ days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # when it applies
 and an ordered list of `[[plan.exercise]]`. Renaming an exercise starts its progress
 fresh (identity is the name).
 
+**Top-level fields:** `rest_days` (optional) — a weekday or array of weekdays to take
+off, e.g. `rest_days = ["sun"]` or `rest_days = ["Saturday", "sun"]`. Names accept any
+case/length (same rules as `days`). On a listed day the app shows the **Rest day**
+screen instead of auto-loading a plan; switching plan trains anyway. An in-progress
+session for today still wins over the rest screen.
+
 ## Settings (⚙)
 
 - **Plans URL** — where to fetch TOML (blank = bundled `plans.toml`).
 - **Refresh** — re-fetch plans now.
 - **Restart session** — wipe today's ticks and rebuild from last numbers.
-- **Export / Import** — download or restore a JSON backup of your progress (the only
-  irreplaceable, device-local data).
+- **Export / Import** — download or restore a JSON backup of your progress and skip
+  streaks (the only irreplaceable, device-local data).
 
 ---
 
@@ -134,7 +150,7 @@ No build step — vanilla ES modules and static files.
 
 ```bash
 python3 -m http.server 8000      # serve, then open http://localhost:8000
-node --test                      # run the unit tests (11)
+node --test                      # run the unit tests (24)
 uv run --with pillow scripts/make_icons.py   # regenerate icons
 ```
 
