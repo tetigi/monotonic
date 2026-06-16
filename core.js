@@ -89,6 +89,20 @@ export function reconcileRemaining(oldSets, oldLeft, newSets) {
   return Math.max(0, newSets - done);
 }
 
+// Roll an outgoing (past) session into the consecutive-skip streaks. For each
+// item: skipped && !done bumps its streak; done resets to 0; an item that was
+// neither touched (left undone, not skipped) is left unchanged — we only count
+// deliberate skips, so an unfinished session doesn't punish exercises you
+// simply never got to. Returns a fresh object; never mutates the input.
+export function reconcileSkipStreaks(prevStreaks, prevItems) {
+  const next = { ...(prevStreaks || {}) };
+  for (const item of prevItems || []) {
+    if (item.done) next[item.name] = 0;
+    else if (item.skipped) next[item.name] = (next[item.name] || 0) + 1;
+  }
+  return next;
+}
+
 export function cueFor(item) {
   const { cur, ref, hasWeight } = item;
   const down = cur.sets < ref.sets || cur.reps < ref.reps || (hasWeight && cur.weight < ref.weight);

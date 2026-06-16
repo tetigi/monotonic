@@ -2,8 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parsePlans, pickTodaysPlan, referenceFor, buildItems, cueFor, normDay, normUnit,
-  parseRestDays, isRestDay, tickRemaining, reconcileRemaining,
+  parseRestDays, isRestDay, tickRemaining, reconcileRemaining, reconcileSkipStreaks,
 } from '../core.js';
+
+const mkItem = (name, { done = false, skipped = false } = {}) => ({ name, done, skipped });
 
 const SAMPLE = `
 [[plan]]
@@ -102,6 +104,37 @@ test('cueFor flags decreases, holds, and increases', () => {
   assert.equal(cueFor(mk({ sets: 4, reps: 7, weight: 60 }, { sets: 3, reps: 8, weight: 60 })), 'down');
   // weight ignored when exercise has no weight
   assert.equal(cueFor(mk({ sets: 3, reps: 8, weight: 0 }, { sets: 3, reps: 8, weight: null }, false)), 'same');
+});
+
+test('reconcileSkipStreaks increments skipped, resets done, leaves untouched', () => {
+  const prev = { Bench: 1, Squat: 4, Rows: 2 };
+  const items = [
+    mkItem('Bench', { skipped: true }),   // skipped -> +1
+    mkItem('Squat', { done: true }),       // done -> 0
+    mkItem('Rows'),                         // neither -> unchanged
+    mkItem('Curls', { skipped: true }),     // new exercise, skipped -> 1
+  ];
+  const next = reconcileSkipStreaks(prev, items);
+  assert.deepEqual(next, { Bench: 2, Squat: 0, Rows: 2, Curls: 1 });
+});
+
+test('reconcileSkipStreaks counts a new exercise from zero', () => {
+  assert.deepEqual(reconcileSkipStreaks({}, [mkItem('Dips', { skipped: true })]), { Dips: 1 });
+});
+
+test('reconcileSkipStreaks: done beats skipped if both somehow set', () => {
+  // markDone clears skipped, but be defensive: done should win and reset.
+  const next = reconcileSkipStreaks({ Bench: 3 }, [mkItem('Bench', { done: true, skipped: true })]);
+  assert.equal(next.Bench, 0);
+});
+
+test('reconcileSkipStreaks is pure and tolerates null inputs', () => {
+  const prev = { Bench: 1 };
+  const next = reconcileSkipStreaks(prev, [mkItem('Bench', { skipped: true })]);
+  assert.deepEqual(prev, { Bench: 1 }); // input untouched
+  assert.equal(next.Bench, 2);
+  assert.deepEqual(reconcileSkipStreaks(null, null), {});
+  assert.deepEqual(reconcileSkipStreaks(undefined, undefined), {});
 });
 
 test('normDay handles full names and whitespace', () => {
