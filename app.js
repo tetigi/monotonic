@@ -376,7 +376,7 @@ $('saveUrl').addEventListener('click', async () => {
 });
 $('restartSession').addEventListener('click', () => {
   const p = planByName(selectEl.value) || pickTodaysPlan(plans, todayDow());
-  if (p) { buildSession(p); renderSession(); }
+  if (p) { buildSession(p); renderSelect(); renderSession(); } // renderSelect clears a stale "Rest day" title
   dlg.close();
 });
 

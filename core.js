@@ -30,7 +30,8 @@ export function parsePlans(text) {
 }
 
 // Top-level `rest_days` (sibling to [[plan]]): a weekday or array of weekdays,
-// any case/length. Returns normalized 3-letter names; absent/invalid -> [].
+// any case/length. Returns normalized 3-letter names; absent -> []. Throws on
+// malformed TOML (like parsePlans), so callers that may pass junk should guard.
 export function parseRestDays(text) {
   const data = parse(text);
   const raw = data.rest_days;
