@@ -1,4 +1,4 @@
-import { WEEKDAYS, parsePlans, parseRestDays, isRestDay, pickTodaysPlan, buildItems, cueFor } from './core.js';
+import { WEEKDAYS, parsePlans, parseRestDays, isRestDay, pickTodaysPlan, buildItems, cueFor, tickRemaining, reconcileRemaining } from './core.js';
 
 const DEFAULT_URL = './plans.toml';
 
@@ -118,8 +118,17 @@ function buildSession(plan) {
 
 function planByName(name) { return plans.find((p) => p.name === name); }
 
+// Backfill setsLeft on sessions saved before the tick feature existed.
+function normalizeSession(s) {
+  if (!s?.items) return s;
+  for (const it of s.items) {
+    if (it.setsLeft == null) it.setsLeft = it.done ? 0 : it.cur.sets;
+  }
+  return s;
+}
+
 function ensureSession() {
-  if (active && active.date === todayDate() && active.items?.length) { resting = false; return; } // resume
+  if (active && active.date === todayDate() && active.items?.length) { resting = false; normalizeSession(active); return; } // resume
   if (isRestDay(restDays, todayDow())) { resting = true; return; } // rest day: no auto session
   resting = false;
   const plan = pickTodaysPlan(plans, todayDow());
@@ -182,6 +191,9 @@ function stepperGroup(i, field, key, value) {
     + `<button data-act="step" data-i="${i}" data-field="${field}" data-delta="1">+</button></div>`;
 }
 
+// The tick control's face: a check when finished, else the sets-remaining count.
+const tickLabel = (item) => (item.done ? '✓' : String(Math.max(0, item.setsLeft ?? 0)));
+
 function cellClass(item) {
   if (item.done || item.skipped) return 'resolved';
   const cue = cueFor(item);
@@ -221,6 +233,7 @@ function renderSession() {
           <span class="sp"></span>
           <button class="act skip${item.skipped ? ' on' : ''}" data-act="skip" data-i="${i}">skip</button>
           <button class="act done${item.done ? ' on' : ''}" data-act="done" data-i="${i}">${item.done ? '✓ done' : 'done'}</button>
+          <button class="tick${item.done ? ' on' : ''}" data-act="tick" data-i="${i}" aria-label="Tick off a set">${tickLabel(item)}</button>
         </div>
       </section>`;
   }).join('');
@@ -239,6 +252,8 @@ function updateCard(i) {
   const d = card.querySelector('.act.done');
   if (d) { d.classList.toggle('on', item.done); d.textContent = item.done ? '✓ done' : 'done'; }
   card.querySelector('.act.skip')?.classList.toggle('on', item.skipped);
+  const t = card.querySelector('.tick');
+  if (t) { t.classList.toggle('on', item.done); t.textContent = tickLabel(item); }
   updateMeta();
 }
 
@@ -250,6 +265,10 @@ function stepField(i, field, deltaUnits) {
   let next = (item.cur[field] ?? 0) + deltaUnits * stepSize;
   // weight keeps fractions; counts/minutes/seconds stay whole numbers.
   next = Math.max(0, field === 'weight' ? Math.round(next * 1000) / 1000 : Math.round(next));
+  if (field === 'sets') {
+    // Keep already-ticked sets fixed; recompute what's left against the new target.
+    item.setsLeft = reconcileRemaining(item.cur.sets, item.setsLeft, next);
+  }
   item.cur[field] = next;
   lsSet(K.active, active);
   updateCard(i);
@@ -277,6 +296,7 @@ function markDone(i) {
     else if (item.prevProgress !== undefined) progress[item.name] = item.prevProgress;
     item.prevProgress = undefined;
     item.done = false;
+    item.setsLeft = item.cur.sets; // un-done -> all sets to do again
   } else {
     item.prevProgress = progress[item.name] ? { ...progress[item.name] } : null;
     progress[item.name] = {
@@ -285,8 +305,20 @@ function markDone(i) {
     };
     item.done = true;
     item.skipped = false;
+    item.setsLeft = 0; // done means nothing left to tick
   }
   lsSet(K.progress, progress);
+  lsSet(K.active, active);
+  updateCard(i);
+}
+
+function tick(i) {
+  const item = active.items[i];
+  if (item.done) return; // nothing left to tick off
+  const { setsLeft, done } = tickRemaining(item.setsLeft);
+  item.setsLeft = setsLeft;
+  item.skipped = false;
+  if (done) { markDone(i); return; } // markDone persists + re-renders (and zeros setsLeft)
   lsSet(K.active, active);
   updateCard(i);
 }
@@ -334,6 +366,7 @@ sessionEl.addEventListener('click', (e) => {
   const act = btn.dataset.act, i = +btn.dataset.i;
   if (act === 'done') markDone(i);
   else if (act === 'skip') markSkip(i);
+  else if (act === 'tick') tick(i);
   else if (act === 'edit') editField(i, btn.dataset.field);
 });
 
@@ -397,7 +430,7 @@ $('importFile').addEventListener('change', async (e) => {
   try {
     const data = JSON.parse(await file.text());
     if (data.progress) { progress = data.progress; lsSet(K.progress, progress); }
-    if (data.active) { active = data.active; lsSet(K.active, active); }
+    if (data.active) { active = normalizeSession(data.active); lsSet(K.active, active); }
     if (typeof data.plansUrl === 'string') lsSet(K.url, data.plansUrl);
     rebuildAfterPlansChange(); // re-evaluate rest day / session against imported state
     $('settingsErr').textContent = 'Backup imported.';

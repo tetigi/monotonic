@@ -65,11 +65,28 @@ export function buildItems(plan, progress) {
       hasWeight: ref.weight != null,
       ref,
       cur: { sets: ref.sets, reps: ref.reps, weight: ref.weight },
+      setsLeft: ref.sets, // sets still to tick off this session
       done: false,
       skipped: false,
       prevProgress: undefined,
     };
   });
+}
+
+// Tick one set off. Returns the new sets-remaining (floored at 0) and whether
+// the exercise is now finished (reached 0). Pure: callers apply the result.
+export function tickRemaining(left) {
+  const next = Math.max(0, Math.round(left ?? 0) - 1);
+  return { setsLeft: next, done: next === 0 };
+}
+
+// Reconcile sets-remaining when the sets target changes mid-session. We keep
+// the number of sets already ticked off (oldSets - oldLeft) fixed and recompute
+// what's left against the new target, clamped to [0, newSets]. Bumping the
+// target adds more to do; cutting it can finish the exercise outright.
+export function reconcileRemaining(oldSets, oldLeft, newSets) {
+  const done = Math.max(0, (oldSets ?? 0) - (oldLeft ?? 0));
+  return Math.max(0, Math.min(newSets, newSets - done));
 }
 
 export function cueFor(item) {

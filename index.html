@@ -110,6 +110,12 @@
     .act.done:active{background:var(--coral);color:#fff}
     .act.done.on{background:var(--coral);color:#fff}
     .act.skip.on{background:var(--body);color:var(--bg);border-color:var(--body)}
+    /* square "tick off a set" control: shows sets remaining, counts down on tap */
+    .tick{font-family:var(--mono);font-size:15px;font-weight:700;width:38px;height:38px;flex:none;
+      border:1px solid var(--coral);background:transparent;color:var(--coral);
+      font-variant-numeric:tabular-nums;text-align:center;padding:0}
+    .tick:active{background:var(--coral);color:#fff}
+    .tick.on{background:var(--coral);color:#fff}
 
     /* crosshair corner ticks */
     .cx{width:0;height:0}

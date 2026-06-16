@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parsePlans, pickTodaysPlan, referenceFor, buildItems, cueFor, normDay, normUnit,
-  parseRestDays, isRestDay,
+  parseRestDays, isRestDay, tickRemaining, reconcileRemaining,
 } from '../core.js';
 
 const SAMPLE = `
@@ -137,6 +137,33 @@ test('normUnit accepts reps/min/time and falls back to reps', () => {
   assert.equal(normUnit('MIN'), 'min');
   assert.equal(normUnit(' Time '), 'time');
   assert.equal(normUnit('bogus'), 'reps');
+});
+
+test('buildItems seeds setsLeft from the reference set count', () => {
+  const plans = parsePlans(SAMPLE);
+  const items = buildItems(plans[0], {});
+  assert.equal(items[0].setsLeft, items[0].cur.sets); // Bench, 3
+  // honours recorded progress like cur/ref do
+  const withHistory = buildItems(plans[0], { Bench: { sets: 5, reps: 8, weight: 65 } });
+  assert.equal(withHistory[0].setsLeft, 5);
+});
+
+test('tickRemaining decrements, floors at 0, and flags done at 0', () => {
+  assert.deepEqual(tickRemaining(3), { setsLeft: 2, done: false });
+  assert.deepEqual(tickRemaining(1), { setsLeft: 0, done: true });   // last set -> done
+  assert.deepEqual(tickRemaining(0), { setsLeft: 0, done: true });   // already empty
+  assert.deepEqual(tickRemaining(undefined), { setsLeft: 0, done: true });
+});
+
+test('reconcileRemaining keeps ticked sets fixed when the target changes', () => {
+  // 3 sets, 1 ticked (2 left) -> bump target to 5: 4 still to do
+  assert.equal(reconcileRemaining(3, 2, 5), 4);
+  // 3 sets, 1 ticked (2 left) -> cut target to 1: already past it, nothing left
+  assert.equal(reconcileRemaining(3, 2, 1), 0);
+  // none ticked yet -> remaining tracks the new target
+  assert.equal(reconcileRemaining(3, 3, 4), 4);
+  // never exceeds the new target
+  assert.equal(reconcileRemaining(3, 0, 2), 0);
 });
 
 test('buildItems carries unit and resolves rep step', () => {
