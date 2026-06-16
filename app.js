@@ -314,10 +314,9 @@ function markDone(i) {
 
 function tick(i) {
   const item = active.items[i];
-  if (item.done) return; // nothing left to tick off
+  if (item.done || item.skipped) return; // resolved -> nothing to tick off
   const { setsLeft, done } = tickRemaining(item.setsLeft);
   item.setsLeft = setsLeft;
-  item.skipped = false;
   if (done) { markDone(i); return; } // markDone persists + re-renders (and zeros setsLeft)
   lsSet(K.active, active);
   updateCard(i);

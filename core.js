@@ -82,11 +82,11 @@ export function tickRemaining(left) {
 
 // Reconcile sets-remaining when the sets target changes mid-session. We keep
 // the number of sets already ticked off (oldSets - oldLeft) fixed and recompute
-// what's left against the new target, clamped to [0, newSets]. Bumping the
-// target adds more to do; cutting it can finish the exercise outright.
+// what's left against the new target, floored at 0. Bumping the target adds
+// more to do; cutting it below the done count finishes the exercise outright.
 export function reconcileRemaining(oldSets, oldLeft, newSets) {
   const done = Math.max(0, (oldSets ?? 0) - (oldLeft ?? 0));
-  return Math.max(0, Math.min(newSets, newSets - done));
+  return Math.max(0, newSets - done);
 }
 
 export function cueFor(item) {
