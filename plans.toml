@@ -12,12 +12,16 @@
 # the app shows a "Rest day" screen instead of auto-loading a plan; you can
 # still switch plan to train anyway. Names accept any case/length, e.g.
 # rest_days = ["sun"]  or  rest_days = ["Saturday", "sun"].
-
-rest_days = ["sun"]
+#
+# Weekly schedule (every day is covered, so no rest_days):
+#   mon/fri          -> Short - Olsztyn - Full
+#   tue/wed/thu      -> Short - Praga - Full
+#   sat/sun          -> Long - Olsztyn - Full
+# Switch to any plan on any day via the ▾ caret next to the title.
 
 [[plan]]
-name = "Daily"
-days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # same every day
+name = "Long - Olsztyn - Full"
+days = ["sat", "sun"]
 
   [[plan.exercise]]
   name = "Run"            # 10 min run (switch unit to "time" for mm:ss)
@@ -82,3 +86,112 @@ days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]   # same every day
   name = "Obliques"
   sets = 3
   reps = 12
+
+[[plan]]
+name = "Short - Praga - Full"
+days = ["tue", "wed", "thu"]
+
+  [[plan.exercise]]
+  name = "Warmup"         # just tick Done
+  sets = 1
+  reps = 1
+
+  [[plan.exercise]]
+  name = "Pull-ups"
+  sets = 2
+  reps = 8
+
+  [[plan.exercise]]
+  name = "Bulgarian Squats"
+  sets = 2
+  reps = 8
+  weight = 20
+
+  [[plan.exercise]]
+  name = "Dips"
+  sets = 2
+  reps = 8
+
+  [[plan.exercise]]
+  name = "Hamstring Curls"
+  sets = 2
+  reps = 12
+  weight = 40
+
+  [[plan.exercise]]
+  name = "Wall Sits"      # 1 minute hold, shown mm:ss, +/- 15s
+  sets = 2
+  reps = 60
+  unit = "time"
+
+  [[plan.exercise]]
+  name = "Weighted Rows"
+  sets = 2
+  reps = 12
+  weight = 35
+
+  [[plan.exercise]]
+  name = "Push-ups"
+  sets = 2
+  reps = 15
+
+  [[plan.exercise]]
+  name = "Lying Leg-raises"
+  sets = 2
+  reps = 20
+
+  [[plan.exercise]]
+  name = "Crunches"
+  sets = 2
+  reps = 20
+
+[[plan]]
+name = "Short - Olsztyn - Full"
+days = ["mon", "fri"]
+
+  [[plan.exercise]]
+  name = "Warmup"         # just tick Done
+  sets = 1
+  reps = 1
+
+  [[plan.exercise]]
+  name = "Pull-ups"
+  sets = 2
+  reps = 8
+
+  [[plan.exercise]]
+  name = "Bulgarian Squats"
+  sets = 2
+  reps = 8
+  weight = 20
+
+  [[plan.exercise]]
+  name = "Dips"
+  sets = 2
+  reps = 8
+
+  [[plan.exercise]]
+  name = "Deadlift"
+  sets = 2
+  reps = 8
+  weight = 60
+
+  [[plan.exercise]]
+  name = "Inverted Rows"
+  sets = 2
+  reps = 8
+
+  [[plan.exercise]]
+  name = "Push-ups"
+  sets = 2
+  reps = 15
+
+  [[plan.exercise]]
+  name = "Hanging Leg-raises"
+  sets = 2
+  reps = 12
+
+  [[plan.exercise]]
+  name = "Crunches"
+  sets = 2
+  reps = 20
