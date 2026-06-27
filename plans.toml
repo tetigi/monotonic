@@ -150,6 +150,12 @@ name = "Short - Olsztyn - Full"
 days = ["mon", "fri"]
 
   [[plan.exercise]]
+  name = "Run"            # 10 min run (switch unit to "time" for mm:ss)
+  sets = 1
+  reps = 10
+  unit = "min"
+
+  [[plan.exercise]]
   name = "Warmup"         # just tick Done
   sets = 1
   reps = 1
