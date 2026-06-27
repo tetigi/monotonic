@@ -14,13 +14,13 @@
 # rest_days = ["sun"]  or  rest_days = ["Saturday", "sun"].
 #
 # Weekly schedule (every day is covered, so no rest_days):
-#   mon/fri          -> Short - Olsztyn - Full
-#   tue/wed/thu      -> Short - Praga - Full
-#   sat/sun          -> Long - Olsztyn - Full
+#   mon/fri          -> Short B - Full
+#   tue/wed/thu      -> Short A - Full
+#   sat/sun          -> Long - Full
 # Switch to any plan on any day via the ▾ caret next to the title.
 
 [[plan]]
-name = "Long - Olsztyn - Full"
+name = "Long - Full"
 days = ["sat", "sun"]
 
   [[plan.exercise]]
@@ -88,7 +88,7 @@ days = ["sat", "sun"]
   reps = 12
 
 [[plan]]
-name = "Short - Praga - Full"
+name = "Short A - Full"
 days = ["tue", "wed", "thu"]
 
   [[plan.exercise]]
@@ -146,7 +146,7 @@ days = ["tue", "wed", "thu"]
   reps = 20
 
 [[plan]]
-name = "Short - Olsztyn - Full"
+name = "Short B - Full"
 days = ["mon", "fri"]
 
   [[plan.exercise]]
